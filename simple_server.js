@@ -2,7 +2,7 @@ var http = require("http");
 var request = require("request");
 
 // CONSTANTS
-//var PLAYER_LIMIT = 1;
+var PLAYER_LIMIT = 1;
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
 var total_players = 0; 
  
@@ -18,13 +18,11 @@ function Server (host,gamePort,statsPort) {
 }
 
 var serverList = [];
-serverList.push(new Server("178.62.49.237","4431","88")); //DigitalOcean Master VPS
-// serverList.push(new Server("178.62.6.32","4431","88")); //DigitalOcean VPS 2
-serverList.push(new Server("149.56.103.53","4431","88")); //OVH VPS
+serverList.push(new Server("178.62.49.237","443","88")); //DigitalOcean Master VPS
+serverList.push(new Server("46.101.82.140","443","88")); //DigitalOcean 2 
+serverList.push(new Server("149.56.103.53","443","88")); //OVH VPS
 serverList.push(new Server("46.185.52.171","4431","88")); //ноут
-//serverList.push(new Server("46.185.53.113","4432","89")); //ноут серв2
-//serverList.push(new Server("95.46.98.153","4431","88")); //GMHost VPS
-//serverList.push(new Server("89.185.4.43","443","88")); //общага :)
+
 //serverList.push(new Server("blob-f0ris.c9users.io","8080","8082"));
 
 //берем инфу с серверов с определенным интервалом
