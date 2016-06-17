@@ -5,6 +5,7 @@ var request = require("request");
 var PLAYER_LIMIT = 1;
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
 var total_players = 0; 
+var max_total_players = 0; 
  
 function Server (host,gamePort,statsPort) {
     this.host = host;
@@ -36,7 +37,7 @@ setInterval(function(){
 //server's stats 
 http.createServer(function (request, response) {
     response.writeHead(200, {"Content-Type": "text/plain"});
-	serverList.push({'total_players':total_players});
+	serverList.push({'total_players':total_players, 'max_total_players':max_total_players});
 	response.write(JSON.stringify(serverList));
 	serverList.splice(serverList.length-1,1);//deleting total_players
 	response.end();
@@ -54,6 +55,9 @@ http.createServer(function (request, response) {
 			alive_servers.push(item);
 		}
 	});
+	if (total_players > max_total_players)
+		max_total_players = total_players;
+	
 	//console.log("total_players: "+total_players);
 	//console.log("alive_servers: "+alive_servers.length);
 	
