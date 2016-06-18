@@ -93,7 +93,7 @@ function checkPlayers(server) {
 
         if (typeof body != 'undefined') {
             try {
-				a = JSON.parse(body);
+                a = JSON.parse(body);
                 //console.log(body);
                 obj = JSON.parse(body);
                 server.current_players = obj.current_players;
