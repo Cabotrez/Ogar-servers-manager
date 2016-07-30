@@ -15,13 +15,13 @@ function Server(host, gamePort, statsPort) {
     this.gamemode = "";
     this.gamePort = gamePort;
     this.statsPort = statsPort;
-	this.update_time = "";
+    this.update_time = "";
     this.uptime = "";
     this.reset = function () {
         this.current_players = 0;
         this.max_players = 0;
         this.status = ServStatusEnum.DOWN;
-		this.update_time = "";
+        this.update_time = "";
         this.uptime = "";
         this.gamemode = "";
     }
@@ -43,16 +43,16 @@ setInterval(function () {
     serverList.forEach(function (item, i, arr) {
         checkPlayers(item);
     });
-	checkPlayers(teamsServer);	
-	checkPlayers(experimentalServer);	
+    checkPlayers(teamsServer);
+    checkPlayers(experimentalServer);
 }, 5000);
 
 
 //return servers' stats 
 http.createServer(function (request, response) {
     response.writeHead(200, {"Content-Type": "text/plain"});
-	serverList.push(teamsServer);
-	serverList.push(experimentalServer);
+    serverList.push(teamsServer);
+    serverList.push(experimentalServer);
     serverList.push({'total_players': total_players, 'max_total_players': max_total_players});
     response.write(JSON.stringify(serverList));
     serverList.splice(serverList.length - 3, 3);//deleting temporary objects
@@ -63,26 +63,30 @@ http.createServer(function (request, response) {
 http.createServer(function (request, response) {
     response.writeHead(200, {"Content-Type": "text/plain"});
 
-	if (request.url.match('teams')){
-		response.write(teamsServer.host + ":" + teamsServer.gamePort);
-		response.end();
-		return;
-	}
-	
-	if (request.url.match('experimental')){
-		response.write(experimentalServer.host + ":" + experimentalServer.gamePort);
-		response.end();
-		return;
-	}
-	
+    if (request.url.match('teams')) {
+        response.write(teamsServer.host + ":" + teamsServer.gamePort);
+        response.end();
+        return;
+    }
+
+    if (request.url.match('experimental')) {
+        response.write(experimentalServer.host + ":" + experimentalServer.gamePort);
+        response.end();
+        return;
+    }
+
     var alive_servers = [];
     total_players = 0;
     serverList.forEach(function (item, i, arr) {
-        total_players += item.current_players;
         if (item.status == ServStatusEnum.UP) {
             alive_servers.push(item);
+            total_players += item.current_players;
         }
     });
+
+    total_players += teamsServer.current_players;
+    total_players += experimentalServer.current_players;
+
     if (total_players > max_total_players)
         max_total_players = total_players;
 
@@ -120,7 +124,7 @@ function checkPlayers(server) {
                 server.current_players = obj.current_players;
                 server.max_players = obj.max_players;
                 server.status = ServStatusEnum.UP;
-				server.update_time = obj.update_time;
+                server.update_time = obj.update_time;
                 server.uptime = obj.uptime;
                 server.gamemode = obj.gamemode;
             } catch (e) {
