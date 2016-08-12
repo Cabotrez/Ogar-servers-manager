@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable(<%- datastr%>);
+        var data2 = google.visualization.arrayToDataTable(<%- datastr2%>);
+        var data3 = google.visualization.arrayToDataTable(<%- total%>);
+
+        var options = {
+          title: 'Servers Response time',
+          hAxis: {title: 'Time',  titleTextStyle: {color: '#333'}},
+          vAxis: {minValue: 0}
+        };
+		var options2 = {
+          title: 'Players statistic',
+          hAxis: {title: 'Time',  titleTextStyle: {color: '#333'}},
+          vAxis: {minValue: 0}
+        };
+		var options3 = {
+          title: 'Total players',
+          hAxis: {title: 'Time',  titleTextStyle: {color: '#333'}},
+          vAxis: {minValue: 0}
+        };
+		
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+        var chart2 = new google.visualization.AreaChart(document.getElementById('chart_div2'));
+        chart2.draw(data2, options2);
+        var chart3 = new google.visualization.AreaChart(document.getElementById('chart_div3'));
+        chart3.draw(data3, options3);
+      }
+    </script>
+  </head>
+  <body>
+    <div  id="chart_div" style="width: 90%; height: 400px;"></div>
+	<div  id="chart_div2" style="width: 90%; height: 400px;"></div>
+	<div  id="chart_div3" style="width: 90%; height: 400px;"></div>
+  </body>
+</html>
