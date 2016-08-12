@@ -1,11 +1,14 @@
 var http = require("http");
 var request = require("request");
+var ejs = require("ejs");
+var fs = require("fs");
 
 // CONSTANTS
 //var PLAYER_LIMIT = 1;
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
 var total_players = 0;
 var max_total_players = 0;
+var SAVE_STATS_PERIOD = 3; //3 days
 
 function Server(host, gamePort, statsPort) {
     this.host = host;
@@ -36,6 +39,10 @@ serverList.push(new Server("46.185.52.171", "4431", "88")); //ноут
 var teamsServer = new Server("149.56.103.53", "444", "89");
 var experimentalServer = new Server("149.56.103.53", "447", "90");
 
+var statistic = [["Time", "Update(ms)"]];
+var statistic2 = [["Time", "Current Players"]];
+var statisticTotal = [["Time", "Total Players"]];
+
 //serverList.push(new Server("blob-f0ris.c9users.io","8080","8082"));
 
 //getting servers' info with some interval
@@ -45,8 +52,26 @@ setInterval(function () {
     });
     checkPlayers(teamsServer);
     checkPlayers(experimentalServer);
-}, 5000);
+}, 30000);
 
+//saving statistic
+setInterval(function () {
+    var time = new Date();
+    var timeStr = time.getDate() + " " + time.getHours() + ':' + time.getMinutes();// + ':' + time.getSeconds();
+
+    if (teamsServer.current_players != 0) {
+        statistic.push([timeStr, Math.floor(teamsServer.update_time)]);
+        statistic2.push([timeStr, Math.floor(teamsServer.current_players)]);
+    }
+    if (total_players != 0)
+        statisticTotal.push([timeStr, total_players]);
+
+    while (time.getDate() - statistic[0] >= SAVE_STATS_PERIOD) {
+        statistic.splice(0, 100);
+        statistic2.splice(0, 100);
+        statisticTotal.splice(0, 100);
+    }
+}, 30000);
 
 //return servers' stats 
 http.createServer(function (request, response) {
@@ -58,6 +83,25 @@ http.createServer(function (request, response) {
     serverList.splice(serverList.length - 3, 3);//deleting temporary objects
     response.end();
 }).listen(81);
+
+//show statistic in chart
+http.createServer(function (req, res) {
+    res.writeHead(200, {'Content-Type': 'text/html'});
+
+    //since we are in a request handler function
+    //we're using readFile instead of readFileSync
+    fs.readFile('chart_template.html', 'utf-8', function (err, content) {
+        if (err) {
+            res.end('error occurred');
+            return;
+        }
+
+        var data = JSON.stringify(statistic);
+        var data2 = JSON.stringify(statistic2);
+        var renderedHtml = ejs.render(content, {datastr: data, datastr2: data2, total: JSON.stringify(statisticTotal)});  //get rendered HTML code
+        res.end(renderedHtml);
+    });
+}).listen(82);
 
 //choosing and giving back server's ip
 http.createServer(function (request, response) {
