@@ -9,6 +9,7 @@ var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
 var total_players = 0;
 var max_total_players = 0;
 var SAVE_STATS_PERIOD = 3; //3 days
+var MAX_STATS_DATA_LENGTH = 100;
 
 function Server(host, gamePort, statsPort) {
     this.host = host;
@@ -34,7 +35,8 @@ var serverList = [];
 serverList.push(new Server("178.62.49.237", "443", "88")); //DigitalOcean Master VPS
 serverList.push(new Server("46.101.82.140", "443", "88")); //DigitalOcean 2 
 serverList.push(new Server("149.56.103.53", "443", "88")); //OVH VPS
-serverList.push(new Server("46.185.52.171", "4431", "88")); //ноут
+//serverList.push(new Server("46.185.52.171", "4431", "88")); //ноут
+//serverList.push(new Server("blob-f0ris.c9users.io","8080","8082"));
 
 var teamsServer = new Server("149.56.103.53", "444", "89");
 var experimentalServer = new Server("149.56.103.53", "447", "90");
@@ -42,8 +44,6 @@ var experimentalServer = new Server("149.56.103.53", "447", "90");
 var statistic = [["Time", "Update(ms)"]];
 var statistic2 = [["Time", "Current Players"]];
 var statisticTotal = [["Time", "Total Players"]];
-
-//serverList.push(new Server("blob-f0ris.c9users.io","8080","8082"));
 
 //getting servers' info with some interval
 setInterval(function () {
@@ -60,14 +60,14 @@ setInterval(function () {
             total_players += item.current_players;
         }
     });
-	
-	total_players += teamsServer.current_players;
+
+    total_players += teamsServer.current_players;
     total_players += experimentalServer.current_players;
 
     if (total_players > max_total_players)
         max_total_players = total_players;
 
-	
+
 }, 5000);
 
 //saving statistic
@@ -80,13 +80,16 @@ setInterval(function () {
         statistic2.push([timeStr, Math.floor(teamsServer.current_players)]);
         statisticTotal.push([timeStr, total_players]);
     }
+    if (statistic.length * 2 > MAX_STATS_DATA_LENGTH){
+      var step  = Math.floor(statistic.length / MAX_STATS_DATA_LENGTH)
+      for (i=0; i<arr.length; i+=2){
+       statistic.splice(i,1)
+       statistic2.splice(i,1)
+       statisticTotal.splice(i,1)
+   }
+}
 
-    while (time.getDate() - statistic[0] >= SAVE_STATS_PERIOD) {
-        statistic.splice(0, 100);
-        statistic2.splice(0, 100);
-        statisticTotal.splice(0, 100);
-    }
-}, 30000);
+}, 60000);
 
 //return servers' stats 
 http.createServer(function (request, response) {
