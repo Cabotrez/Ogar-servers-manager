@@ -8,9 +8,10 @@ var fs = require("fs");
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
 var total_players = 0;
 var max_total_players = 0;
-var MAX_STATS_DATA_LENGTH = 100;
+var MAX_STATS_DATA_LENGTH = 200;
 
-function Server(host, gamePort, statsPort) {
+function Server(name, host, gamePort, statsPort) {
+    this.name = name;
     this.host = host;
     this.current_players = 0;
     this.max_players = 0;
@@ -33,17 +34,18 @@ function Server(host, gamePort, statsPort) {
 }
 
 var serverList = [];
-serverList.push(new Server("178.62.49.237", "443", "88")); //DigitalOcean Master VPS
-serverList.push(new Server("46.101.82.140", "443", "88")); //DigitalOcean 2 
-serverList.push(new Server("149.56.103.53", "443", "88")); //OVH VPS
+serverList.push(new Server("Master VPS", "178.62.49.237", "443", "88")); //DigitalOcean Master VPS
+serverList.push(new Server("DO 2", "46.101.82.140", "443", "88")); //DigitalOcean 2 
+serverList.push(new Server("OVH ", "149.56.103.53", "443", "88")); //OVH VPS
 //serverList.push(new Server("46.185.52.171", "4431", "88")); //ноут
 //serverList.push(new Server("blob-f0ris.c9users.io","8080","8082"));
 
-var teamsServer = new Server("149.56.103.53", "444", "89");
-var experimentalServer = new Server("149.56.103.53", "447", "90");
+serverList.push(new Server("OVH teams","149.56.103.53", "444", "89")); //OVH
+serverList.push(new Server("OVH experimental","149.56.103.53", "447", "90")); //OVH
 
-var statistic = [["Time", "Update(ms)"]];
-var statistic2 = [["Time", "Current Players"]];
+var teamsServer = serverList[serverList.length-2];
+var experimentalServer = serverList[serverList.length-1];
+
 var statisticTotal = [["Time", "Total Players"]];
 
 //getting servers' info with some interval
@@ -51,9 +53,7 @@ setInterval(function () {
     serverList.forEach(function (item, i, arr) {
         checkPlayers(item);
     });
-    checkPlayers(teamsServer);
-    checkPlayers(experimentalServer);
-
+   
 	//counting totals
 	total_players = 0;
     serverList.forEach(function (item, i, arr) {
@@ -61,9 +61,6 @@ setInterval(function () {
             total_players += item.current_players;
         }
     });
-
-    total_players += teamsServer.current_players;
-    total_players += experimentalServer.current_players;
 
     if (total_players > max_total_players)
         max_total_players = total_players;
@@ -76,6 +73,8 @@ setInterval(function () {
     var time = new Date();
     var timeStr = time.getDate() + " " + time.getHours() + ':' + time.getMinutes();// + ':' + time.getSeconds();
 
+    statisticTotal.push([timeStr, total_players]);
+
     serverList.forEach(function (item, i, arr) {
         if (item.status == ServStatusEnum.UP) {
             item.statistic.push([timeStr, Math.floor(item.current_players)]);
@@ -84,22 +83,22 @@ setInterval(function () {
         
         if (item.statistic.length > MAX_STATS_DATA_LENGTH * 2){
             for (i=0; i<arr.length; i+=2){
-                statistic.splice(i,1)
-                statistic2.splice(i,1)
+                item.statistic.splice(i,1)
+                item.statisticUpdate.splice(i,1)
                 statisticTotal.splice(i,1)
             }
         }
     });
+
+
 }, 1000);
 
 //return servers' stats 
 http.createServer(function (request, response) {
     response.writeHead(200, {"Content-Type": "text/plain"});
-    serverList.push(teamsServer);
-    serverList.push(experimentalServer);
     serverList.push({'total_players': total_players, 'max_total_players': max_total_players});
     response.write(JSON.stringify(serverList, replacer));
-    serverList.splice(serverList.length - 3, 3);//deleting temporary objects
+    serverList.splice(serverList.length - 1, 1);//deleting temporary objects
     response.end();
 }).listen(81);
 
@@ -115,11 +114,7 @@ http.createServer(function (req, res) {
             return;
         }
 
-        //var data = JSON.stringify(statistic);
-        //var data2 = JSON.stringify(statistic2);
-
-
-        var renderedHtml = ejs.render(content, {servTitle: "MainServer", servData: JSON.stringify(serverList[0].statistic)});  //get rendered HTML code
+        var renderedHtml = ejs.render(content, {serverList: JSON.stringify(serverList)});  //get rendered HTML code
 
         res.end(renderedHtml);
     });
@@ -144,6 +139,7 @@ http.createServer(function (request, response) {
     var alive_servers = [];
     serverList.forEach(function (item, i, arr) {
         if (item.status == ServStatusEnum.UP) {
+            if (item != teamsServer && item != experimentalServer)
             alive_servers.push(item);
         }
     });
@@ -189,7 +185,7 @@ function checkPlayers(server) {
     });
 }
 
-
+//excluding statistic fields from JSON on 81 port
 function replacer(key,value)
 {
     if (key=="statistic") return undefined;

@@ -1,27 +1,54 @@
 <html>
-  <head>
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-      google.charts.load('current', {'packages':['corechart']});
-      google.charts.setOnLoadCallback(drawChart);
-      function drawChart() {
-        var data = google.visualization.arrayToDataTable(<%- servData%>);
+<head>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript">
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(callback);
+    function callback() {
 
-        var options = {
-          title: '<%- servTitle%>',
-          hAxis: {title: 'Time',  titleTextStyle: {color: '#333'}},
-          vAxis: {minValue: 0}
-        };
-	
-		
-        var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
-        chart.draw(data, options);
-      }
-    </script>
-  </head>
-  <body>
-    <div  id="chart_div" style="width: 90%; height: 400px;"></div>
-	<div  id="chart_div2" style="width: 90%; height: 400px;"></div>
-	<div  id="chart_div3" style="width: 90%; height: 400px;"></div>
-  </body>
+      var serverList = JSON.parse('<%- serverList%>');
+
+      serverList.forEach(function (item, i, arr) {
+        drawChart(item);
+      });
+  }
+
+  function drawChart(server){
+        if (server.status == 1) {
+            var data = google.visualization.arrayToDataTable(server.statistic);
+
+            var options = {
+                title: server.name + "\n  " + server.host + ":" +server.gamePort + " " + server.gamemode,
+                hAxis: {title: 'Time',  titleTextStyle: {color: '#333'}},
+                vAxis: {minValue: 0}
+            };
+
+            var div = document.createElement('div');
+            div.id='chart-div1';
+            div.className="chart";
+
+
+            document.body.appendChild(div);
+
+            var chart = new google.visualization.AreaChart(div /*document.getElementById('chart_div')*/);
+            chart.draw(data, options);
+
+        }
+    }
+    function toggle(el) {
+      el.style.display = (el.style.display == 'none') ? '' : 'none'
+    }
+</script>
+<style>
+    .chart{
+      width: 40%; 
+      height: 400px;
+      float:left;
+  }
+</style>
+</head>
+<body>
+  <!-- <div  id="chart_div" class="chart"></div> -->
+  <input type="button" name="hide" onclick="toggle(document.getElementById('chart-div1'))">
+</body>
 </html>
