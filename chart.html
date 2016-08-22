@@ -1,0 +1,19 @@
+<script type="text/javascript">
+      var solt = Math.floor(Math.random()*10000)
+		  document.write('<div  id="chart_div'+solt+'" style="width: 90%; height: 400px;"></div>');
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart<%- servTitle%>);
+      function drawChart<%- servTitle%>() {
+        var data = google.visualization.arrayToDataTable(<%- servData%>);
+
+        var options = {
+          title: '<%- servTitle%>',
+          hAxis: {title: 'Time',  titleTextStyle: {color: '#333'}},
+          vAxis: {minValue: 0}
+        };
+		
+		
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div'+solt));
+        chart.draw(data, options);
+      }
+</script>
