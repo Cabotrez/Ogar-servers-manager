@@ -8,7 +8,7 @@ var fs = require("fs");
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
 var total_players = 0;
 var max_total_players = 0;
-var MAX_STATS_DATA_LENGTH = 200;
+var MAX_STATS_DATA_LENGTH = 500;
 
 function Server(name, host, gamePort, statsPort) {
     this.name = name;
@@ -46,12 +46,13 @@ serverList.push(new Server("OVH experimental","149.56.103.53", "447", "90")); //
 var teamsServer = serverList[serverList.length-2];
 var experimentalServer = serverList[serverList.length-1];
 
-var statisticTotal = [["Time", "Total Players"]];
+// var statisticTotal = [["Time", "Total Players"]];
+var totalsFakeServer = new Server("Totals","", "", ""); //fake server for totals stats
 
 //getting servers' info with some interval
 setInterval(function () {
     serverList.forEach(function (item, i, arr) {
-        checkPlayers(item);
+        fetchServeInfo(item);
     });
    
 	//counting totals
@@ -73,7 +74,8 @@ setInterval(function () {
     var time = new Date();
     var timeStr = time.getDate() + " " + time.getHours() + ':' + time.getMinutes();// + ':' + time.getSeconds();
 
-    statisticTotal.push([timeStr, total_players]);
+    // statisticTotal.push([timeStr, total_players]);
+    totalsFakeServer.statistic.push([timeStr, total_players]);
 
     serverList.forEach(function (item, i, arr) {
         if (item.status == ServStatusEnum.UP) {
@@ -82,16 +84,21 @@ setInterval(function () {
         }
         
         if (item.statistic.length > MAX_STATS_DATA_LENGTH * 2){
-            for (i=0; i<arr.length; i+=2){
-                item.statistic.splice(i,1)
-                item.statisticUpdate.splice(i,1)
-                statisticTotal.splice(i,1)
+            for (var j=1; j<arr.length; j+=2){
+                item.statistic.splice(j,1)
+                item.statisticUpdate.splice(j,1)
             }
         }
     });
 
+    if (totalsFakeServer.statistic.length > MAX_STATS_DATA_LENGTH * 2){
+        for (var j=1; j<totalsFakeServer.statistic.length; j+=2){
+            totalsFakeServer.statistic.splice(j,1)
+        }
+    }
+                
 
-}, 1000);
+}, 30000);
 
 //return servers' stats 
 http.createServer(function (request, response) {
@@ -103,20 +110,28 @@ http.createServer(function (request, response) {
 }).listen(81);
 
 //show statistic in chart
-http.createServer(function (req, res) {
-    res.writeHead(200, {'Content-Type': 'text/html'});
+http.createServer(function (request, response) {
+    response.writeHead(200, {'Content-Type': 'text/html'});
+     if (request.url.match('stats')) {
+        serverList.push(totalsFakeServer);
+        response.write(JSON.stringify(serverList, replacerForGraph));
+        serverList.splice(serverList.length - 1, 1);
+        response.end();
+        return;
+    }
 
     //since we are in a request handler function
     //we're using readFile instead of readFileSync
     fs.readFile('chart_template.html', 'utf-8', function (err, content) {
         if (err) {
-            res.end('error occurred');
+            response.end('error occurred');
             return;
         }
 
-        var renderedHtml = ejs.render(content, {serverList: JSON.stringify(serverList)});  //get rendered HTML code
+        // var renderedHtml = ejs.render(content, {serverList: JSON.stringify(serverList, replacerForGraph)});  //get rendered HTML code
 
-        res.end(renderedHtml);
+        // response.end(renderedHtml);
+        response.end(content);
     });
 }).listen(82);
 
@@ -139,8 +154,9 @@ http.createServer(function (request, response) {
     var alive_servers = [];
     serverList.forEach(function (item, i, arr) {
         if (item.status == ServStatusEnum.UP) {
-            if (item != teamsServer && item != experimentalServer)
-            alive_servers.push(item);
+            if (item != teamsServer && item != experimentalServer){
+                alive_servers.push(item);
+            }
         }
     });
 
@@ -154,7 +170,7 @@ http.createServer(function (request, response) {
 }).listen(80);
 
 // Check players count on server
-function checkPlayers(server) {
+function fetchServeInfo(server) {
 
     request({
         uri: "http://" + server.host + ":" + server.statsPort,
@@ -185,10 +201,16 @@ function checkPlayers(server) {
     });
 }
 
-//excluding statistic fields from JSON on 81 port
+//excluding statistic fields from JSON for 81 port
 function replacer(key,value)
 {
     if (key=="statistic") return undefined;
     else if (key=="statisticUpdate") return undefined;
+    else return value;
+}
+
+function replacerForGraph(key,value)
+{
+    if (key=="statisticUpdate") return undefined;
     else return value;
 }

@@ -2,11 +2,32 @@
 <head>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script type="text/javascript">
-    google.charts.load('current', {'packages':['corechart']});
-    google.charts.setOnLoadCallback(callback);
+
+    var serverList = [];
+
+    function loadStats() {
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+        if (xhttp.readyState == 4 && xhttp.status == 200) {
+          // document.getElementById("demo").innerHTML = xhttp.responseText;
+          //console.log(xhttp.responseText);
+          serverList = JSON.parse(xhttp.responseText);
+          console.log(serverList[0].statistic.length);
+          google.charts.load('current', {'packages':['corechart']});
+          google.charts.setOnLoadCallback(callback);
+          // return JSON.parse(xhttp.responseText);
+        }
+      };
+      xhttp.open("GET", "/stats", true);
+      xhttp.send();
+    }
+
+    
     function callback() {
 
-      var serverList = JSON.parse('<%- serverList%>');
+      // var serverList = JSON.parse('<%- serverList%>');
+      // var serverList = loadStats();
+      // console.log(loadStats());
 
       serverList.forEach(function (item, i, arr) {
         drawChart(item);
@@ -14,11 +35,12 @@
   }
 
   function drawChart(server){
-        if (server.status == 1) {
-            var data = google.visualization.arrayToDataTable(server.statistic);
+
+        if (server.status == 1 || server.name == "Totals") {
+            var data = google.visualization.arrayToDataTable(server.statistic, false);
 
             var options = {
-                title: server.name + "\n  " + server.host + ":" +server.gamePort + " " + server.gamemode,
+                title: server.name + "\n  " + server.host + (server.gamePort?":" +server.gamePort:"") + " " + server.gamemode,
                 hAxis: {title: 'Time',  titleTextStyle: {color: '#333'}},
                 vAxis: {minValue: 0}
             };
@@ -38,16 +60,17 @@
     function toggle(el) {
       el.style.display = (el.style.display == 'none') ? '' : 'none'
     }
+
 </script>
 <style>
     .chart{
-      width: 40%; 
+      width: 50%; 
       height: 400px;
       float:left;
   }
 </style>
 </head>
-<body>
+<body onload="loadStats()">
   <!-- <div  id="chart_div" class="chart"></div> -->
   <input type="button" name="hide" onclick="toggle(document.getElementById('chart-div1'))">
 </body>
