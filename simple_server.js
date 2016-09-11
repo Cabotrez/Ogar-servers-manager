@@ -6,6 +6,7 @@ var fs = require("fs");
 // CONSTANTS
 //var PLAYER_LIMIT = 1;
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
+var GameType = Object.freeze({FFA: 0, TEAMS: 1, EXPERIMENTAL: 2});
 var total_players = 0;
 var max_total_players = 0;
 var MAX_STATS_DATA_LENGTH = 1500;
@@ -13,6 +14,7 @@ var MAX_STATS_DATA_LENGTH = 1500;
 function Server(name, host, gamePort, statsPort) {
     this.name = name;
     this.host = host;
+    this.gameType = GameType.FFA;
     this.current_players = 0;
     this.max_players = 0;
     this.status = ServStatusEnum.DOWN;
@@ -33,6 +35,12 @@ function Server(name, host, gamePort, statsPort) {
     }
 }
 
+function typedServer(name, host, gamePort, statsPort, gameType) {
+    serv = new Server(name, host, gamePort, statsPort);
+    serv.gameType = gameType;
+    return serv;
+}
+
 var serverList = [];
 serverList.push(new Server("Master VPS", "178.62.49.237", "443", "88")); //DigitalOcean Master VPS
 serverList.push(new Server("DO 2", "46.101.82.140", "443", "88")); //DigitalOcean 2 
@@ -40,11 +48,11 @@ serverList.push(new Server("OVH ", "149.56.103.53", "443", "88")); //OVH VPS
 //serverList.push(new Server("46.185.52.171", "4431", "88")); //ноут
 //serverList.push(new Server("blob-f0ris.c9users.io","8080","8082"));
 
-serverList.push(new Server("OVH teams","149.56.103.53", "444", "89"));
-serverList.push(new Server("OVH experimental","149.56.103.53", "447", "90"));
+serverList.push(new typedServer("OVH teams","149.56.103.53", "444", "89", GameType.TEAMS));
+serverList.push(new typedServer("OVH experimental","149.56.103.53", "447", "90", GameType.EXPERIMENTAL));
 
-var teamsServer = serverList[serverList.length - 2];
-var experimentalServer = serverList[serverList.length - 1];
+// var teamsServer = serverList[serverList.length - 2];
+// var experimentalServer = serverList[serverList.length - 1];
 
 // var statisticTotal = [["Time", "Total Players"]];
 var totalsFakeServer = new Server("Totals","", "", ""); //fake server for totals stats
@@ -135,24 +143,18 @@ http.createServer(function (request, response) {
 http.createServer(function (request, response) {
     response.writeHead(200, {"Content-Type": "text/plain"});
 
-    if (request.url.match('teams')) {
-        response.write(teamsServer.host + ":" + teamsServer.gamePort);
-        response.end();
-        return;
-    }
+    var gameType = GameType.FFA;
 
-    if (request.url.match('experimental')) {
-        response.write(experimentalServer.host + ":" + experimentalServer.gamePort);
-        response.end();
-        return;
+    if (request.url.match('teams')) {
+        gameType = GameType.TEAMS;
+    } else if (request.url.match('experimental')) {
+        gameType = GameType.EXPERIMENTAL;
     }
 
     var alive_servers = [];
     serverList.forEach(function (item, i, arr) {
-        if (item.status == ServStatusEnum.UP) {
-            if (item != teamsServer && item != experimentalServer){
-                alive_servers.push(item);
-            }
+        if (item.status == ServStatusEnum.UP && item.gameType == gameType) {
+            alive_servers.push(item);
         }
     });
 
