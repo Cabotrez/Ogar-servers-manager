@@ -105,13 +105,13 @@ setInterval(function () {
 }, 4*60*1000); //1 time in 4 min
 
 //return servers' stats 
-http.createServer(function (request, response) {
+function showStats(response) {
     response.writeHead(200, {"Content-Type": "text/plain"});
     serverList.push({'total_players': total_players, 'max_total_players': max_total_players});
     response.write(JSON.stringify(serverList, replacer));
     serverList.splice(serverList.length - 1, 1);//deleting temporary objects
     response.end();
-}).listen(81);
+};
 
 //show statistic in chart
 http.createServer(function (request, response) {
@@ -142,6 +142,12 @@ http.createServer(function (request, response) {
 //choosing and giving back server's ip
 http.createServer(function (request, response) {
     response.writeHead(200, {"Content-Type": "text/plain"});
+
+    if (request.url.match('stats')){
+        showStats(response);
+        return;
+    }
+
 
     var gameType = GameType.FFA;
 
@@ -204,6 +210,7 @@ function replacer(key,value)
 {
     if (key=="statistic") return undefined;
     else if (key=="statisticUpdate") return undefined;
+    else if (key=="gameType") return undefined;
     else return value;
 }
 
