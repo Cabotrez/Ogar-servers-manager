@@ -8,7 +8,7 @@ var fs = require("fs");
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
 var total_players = 0;
 var max_total_players = 0;
-var MAX_STATS_DATA_LENGTH = 500;
+var MAX_STATS_DATA_LENGTH = 1500;
 
 function Server(name, host, gamePort, statsPort) {
     this.name = name;
@@ -40,11 +40,11 @@ serverList.push(new Server("OVH ", "149.56.103.53", "443", "88")); //OVH VPS
 //serverList.push(new Server("46.185.52.171", "4431", "88")); //ноут
 //serverList.push(new Server("blob-f0ris.c9users.io","8080","8082"));
 
-serverList.push(new Server("OVH teams","149.56.103.53", "444", "89")); //OVH
-serverList.push(new Server("OVH experimental","149.56.103.53", "447", "90")); //OVH
+serverList.push(new Server("OVH teams","149.56.103.53", "444", "89"));
+serverList.push(new Server("OVH experimental","149.56.103.53", "447", "90"));
 
-var teamsServer = serverList[serverList.length-2];
-var experimentalServer = serverList[serverList.length-1];
+var teamsServer = serverList[serverList.length - 2];
+var experimentalServer = serverList[serverList.length - 1];
 
 // var statisticTotal = [["Time", "Total Players"]];
 var totalsFakeServer = new Server("Totals","", "", ""); //fake server for totals stats
@@ -83,22 +83,18 @@ setInterval(function () {
             item.statisticUpdate.push([timeStr, Math.floor(item.update_time)]);
         }
         
-        if (item.statistic.length > MAX_STATS_DATA_LENGTH * 2){
-            for (var j=1; j<arr.length; j+=2){
-                item.statistic.splice(j,1)
-                item.statisticUpdate.splice(j,1)
-            }
+        if (item.statistic.length > MAX_STATS_DATA_LENGTH){
+            item.statistic.splice(0,1)
+            item.statisticUpdate.splice(0,1)   
         }
     });
 
-    if (totalsFakeServer.statistic.length > MAX_STATS_DATA_LENGTH * 2){
-        for (var j=1; j<totalsFakeServer.statistic.length; j+=2){
-            totalsFakeServer.statistic.splice(j,1)
-        }
+    if (totalsFakeServer.statistic.length > MAX_STATS_DATA_LENGTH){
+        totalsFakeServer.statistic.splice(0,1)
     }
                 
 
-}, 30000);
+}, 4*60*1000); //1 time in 4 min
 
 //return servers' stats 
 http.createServer(function (request, response) {
