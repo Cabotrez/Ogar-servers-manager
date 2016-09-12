@@ -1,6 +1,6 @@
 var http = require("http");
 var request = require("request");
-var ejs = require("ejs");
+// var ejs = require("ejs");
 var fs = require("fs");
 
 // CONSTANTS
@@ -11,7 +11,7 @@ var total_players = 0;
 var gp_total_players = 0;
 var max_total_players = 0;
 var gp_max_total_players = 0;
-var MAX_STATS_DATA_LENGTH = 1500;
+var MAX_STATS_DATA_LENGTH = 1000;
 
 function Server(name, host, gamePort, statsPort) {
     this.name = name;
@@ -132,7 +132,7 @@ setInterval(function () {
     }
                 
 
-}, /*4*60*1000*/ 1000); //1 time in 4 min
+}, 4*60*1000); //1 time in 4 min
 
 //return servers' stats 
 function showStats(response) {
@@ -189,7 +189,6 @@ http.createServer(function (request, response) {
         return;
     }
 
-
     var gameType = GameType.FFA;
 
     if (request.url.match('teams')) {
@@ -198,8 +197,15 @@ http.createServer(function (request, response) {
         gameType = GameType.EXPERIMENTAL;
     }
 
+    var list;
+    if (request.url.match('gp')){
+        list = GPserverList;
+    } else {
+        list = serverList;
+    }
+
     var alive_servers = [];
-    serverList.forEach(function (item, i, arr) {
+    list.forEach(function (item, i, arr) {
         if (item.status == ServStatusEnum.UP && item.gameType == gameType) {
             alive_servers.push(item);
         }
