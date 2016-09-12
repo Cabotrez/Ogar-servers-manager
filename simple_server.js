@@ -114,8 +114,8 @@ setInterval(function () {
         
         if (typeof item.statistic != 'undefined'){
             if (item.statistic.length > MAX_STATS_DATA_LENGTH){
-                item.statistic.splice(0,1)
-                item.statisticUpdate.splice(0,1)   
+                item.statistic.splice(1,1)
+                item.statisticUpdate.splice(1,1)   
             }
     }
     }
@@ -125,10 +125,10 @@ setInterval(function () {
 
 
     if (totalsFakeServer.statistic.length > MAX_STATS_DATA_LENGTH){
-        totalsFakeServer.statistic.splice(0,1)
+        totalsFakeServer.statistic.splice(1,1)
     }
     if (GPtotalsFakeServer.statistic.length > MAX_STATS_DATA_LENGTH){
-        GPtotalsFakeServer.statistic.splice(0,1)
+        GPtotalsFakeServer.statistic.splice(1,1)
     }
                 
 
