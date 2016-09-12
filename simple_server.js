@@ -8,7 +8,9 @@ var fs = require("fs");
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
 var GameType = Object.freeze({FFA: 0, TEAMS: 1, EXPERIMENTAL: 2});
 var total_players = 0;
+var gp_total_players = 0;
 var max_total_players = 0;
+var gp_max_total_players = 0;
 var MAX_STATS_DATA_LENGTH = 1500;
 
 function Server(name, host, gamePort, statsPort) {
@@ -45,22 +47,23 @@ var serverList = [];
 serverList.push(new Server("Master VPS", "178.62.49.237", "443", "88")); //DigitalOcean Master VPS
 serverList.push(new Server("DO 2", "46.101.82.140", "443", "88")); //DigitalOcean 2 
 serverList.push(new Server("OVH ", "149.56.103.53", "443", "88")); //OVH VPS
-//serverList.push(new Server("46.185.52.171", "4431", "88")); //ноут
 //serverList.push(new Server("blob-f0ris.c9users.io","8080","8082"));
 
 serverList.push(new typedServer("OVH teams","149.56.103.53", "444", "89", GameType.TEAMS));
 serverList.push(new typedServer("OVH experimental","149.56.103.53", "447", "90", GameType.EXPERIMENTAL));
 
-// var teamsServer = serverList[serverList.length - 2];
-// var experimentalServer = serverList[serverList.length - 1];
-
-// var statisticTotal = [["Time", "Total Players"]];
 var totalsFakeServer = new Server("Totals","", "", ""); //fake server for totals stats
+var GPtotalsFakeServer = new Server("GP Totals","", "", ""); //fake server for totals stats
+
+var GPserverList = [];
+GPserverList.push(new Server("FFA","46.101.82.140", "443", "88"));
+GPserverList.push(new typedServer("GP TEAMS","46.101.82.140", "444", "88", GameType.TEAMS));
+GPserverList.push(new typedServer("GP experimental","46.101.82.140", "447", "88", GameType.EXPERIMENTAL));
 
 //getting servers' info with some interval
 setInterval(function () {
     serverList.forEach(function (item, i, arr) {
-        fetchServeInfo(item);
+        fetchServerInfo(item);
     });
    
 	//counting totals
@@ -74,6 +77,22 @@ setInterval(function () {
     if (total_players > max_total_players)
         max_total_players = total_players;
 
+    /*************  Google Players**********/
+
+    GPserverList.forEach(function (item, i, arr) {
+        fetchServerInfo(item);
+    });
+   
+    //counting totals
+    gp_total_players = 0;
+    GPserverList.forEach(function (item, i, arr) {
+        if (item.status == ServStatusEnum.UP) {
+            gp_total_players += item.current_players;
+        }
+    });
+
+    if (gp_total_players > gp_max_total_players)
+        gp_max_total_players = gp_total_players;
 
 }, 5000);
 
@@ -84,33 +103,55 @@ setInterval(function () {
 
     // statisticTotal.push([timeStr, total_players]);
     totalsFakeServer.statistic.push([timeStr, total_players]);
+    GPtotalsFakeServer.statistic.push([timeStr, gp_total_players]);
 
-    serverList.forEach(function (item, i, arr) {
+
+    function saveStats(item, i, arr) {
         if (item.status == ServStatusEnum.UP) {
             item.statistic.push([timeStr, Math.floor(item.current_players)]);
             item.statisticUpdate.push([timeStr, Math.floor(item.update_time)]);
         }
         
-        if (item.statistic.length > MAX_STATS_DATA_LENGTH){
-            item.statistic.splice(0,1)
-            item.statisticUpdate.splice(0,1)   
-        }
-    });
+        if (typeof item.statistic != 'undefined'){
+            if (item.statistic.length > MAX_STATS_DATA_LENGTH){
+                item.statistic.splice(0,1)
+                item.statisticUpdate.splice(0,1)   
+            }
+    }
+    }
+
+    serverList.forEach(saveStats);
+    GPserverList.forEach(saveStats);
+
 
     if (totalsFakeServer.statistic.length > MAX_STATS_DATA_LENGTH){
         totalsFakeServer.statistic.splice(0,1)
     }
+    if (GPtotalsFakeServer.statistic.length > MAX_STATS_DATA_LENGTH){
+        GPtotalsFakeServer.statistic.splice(0,1)
+    }
                 
 
-}, 4*60*1000); //1 time in 4 min
+}, /*4*60*1000*/ 1000); //1 time in 4 min
 
 //return servers' stats 
 function showStats(response) {
     response.writeHead(200, {"Content-Type": "text/plain"});
-    serverList.push({'total_players': total_players, 'max_total_players': max_total_players});
-    response.write(JSON.stringify(serverList, replacer));
-    serverList.splice(serverList.length - 1, 1);//deleting temporary objects
+
+    var totals = [{'total_players': total_players, 'max_total_players': max_total_players},
+                  {'gp_total_players': gp_total_players, 'gp_max_total_players': gp_max_total_players}]; 
+
+    serverList.push(totals[0]);
+    GPserverList.push(totals[1]);
+
+    finalList = {Amazon:serverList, GoolePlay:GPserverList, Totals:totals};
+
+    response.write(JSON.stringify(finalList, replacer));
     response.end();
+
+    //deleting temporary objects
+    serverList.splice(serverList.length - 1, 1);
+    GPserverList.splice(GPserverList.length - 1, 1);//deleting temporary objects
 };
 
 //show statistic in chart
@@ -174,7 +215,7 @@ http.createServer(function (request, response) {
 }).listen(80);
 
 // Check players count on server
-function fetchServeInfo(server) {
+function fetchServerInfo(server) {
 
     request({
         uri: "http://" + server.host + ":" + server.statsPort,
