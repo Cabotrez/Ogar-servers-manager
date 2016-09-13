@@ -59,9 +59,9 @@ var totalsFakeServer = new Server("Totals","", "", ""); //fake server for totals
 var GPtotalsFakeServer = new Server("GP Totals","", "", ""); //fake server for totals stats
 
 var GPserverList = [];
-GPserverList.push(new Server("FFA","46.101.82.140", "443", "88"));
-GPserverList.push(new typedServer("GP TEAMS","46.101.82.140", "444", "88", GameType.TEAMS));
-GPserverList.push(new typedServer("GP experimental","46.101.82.140", "447", "88", GameType.EXPERIMENTAL));
+// GPserverList.push(new Server("FFA","46.101.82.140", "443", "88"));
+// GPserverList.push(new typedServer("GP TEAMS","46.101.82.140", "444", "88", GameType.TEAMS));
+// GPserverList.push(new typedServer("GP experimental","46.101.82.140", "447", "88", GameType.EXPERIMENTAL));
 
 //getting servers' info with some interval
 setInterval(function () {
@@ -145,10 +145,13 @@ function showStats(response) {
                   {'gp_total_players': gp_total_players, 'gp_max_total_players': gp_max_total_players}]; 
 
     serverList.push(totals[0]);
-    GPserverList.push(totals[1]);
-
-    finalList = {Amazon:serverList, GoolePlay:GPserverList, Totals:totals};
-
+    
+    if (GPserverList.length > 0){
+        GPserverList.push(totals[1]);
+        finalList = {Amazon:serverList, GooglePlay:GPserverList, Totals:totals};
+    } else {
+        finalList = {Amazon:serverList};
+    }
     response.write(JSON.stringify(finalList, replacer));
     response.end();
 
