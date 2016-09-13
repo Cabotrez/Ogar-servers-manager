@@ -13,6 +13,9 @@ var max_total_players = 0;
 var gp_max_total_players = 0;
 var MAX_STATS_DATA_LENGTH = 1000;
 
+// if server have players count lower than this value, forcing move playres to this server 
+var LOW_PLAYER_LIMIT = 30; 
+
 function Server(name, host, gamePort, statsPort) {
     this.name = name;
     this.host = host;
@@ -154,6 +157,11 @@ function showStats(response) {
     GPserverList.splice(GPserverList.length - 1, 1);//deleting temporary objects
 };
 
+
+http.createServer(function (request, response) {
+    showStats(response);
+}).listen(81);
+
 //show statistic in chart
 http.createServer(function (request, response) {
     response.writeHead(200, {'Content-Type': 'text/html'});
@@ -210,6 +218,16 @@ http.createServer(function (request, response) {
             alive_servers.push(item);
         }
     });
+
+    for (var i = 0; i < alive_servers.length; i++) {
+        if (alive_servers[i].current_players < LOW_PLAYER_LIMIT) {
+                if (Math.floor(Math.random() * 5) != 0) { //80% probabily to return this server
+                    response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort);
+                    response.end();
+                    return;
+                }
+        }
+    }
 
     //uniform players distribution between active servers
     if (alive_servers.length != 0) {
