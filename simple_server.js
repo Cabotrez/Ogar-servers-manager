@@ -2,6 +2,7 @@ var http = require("http");
 var request = require("request");
 // var ejs = require("ejs");
 var fs = require("fs");
+var path = require('path');
 
 // CONSTANTS
 //var PLAYER_LIMIT = 1;
@@ -178,9 +179,9 @@ http.createServer(function (request, response) {
 
     //since we are in a request handler function
     //we're using readFile instead of readFileSync
-    fs.readFile('chart_template.html', 'utf-8', function (err, content) {
+    fs.readFile(path.join(__dirname, 'chart_template.html'), 'utf-8', function (err, content) {
         if (err) {
-            response.end('error occurred');
+            response.end('error occurred'+err);
             return;
         }
 
