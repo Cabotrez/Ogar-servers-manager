@@ -7,7 +7,7 @@ var path = require('path');
 // CONSTANTS
 //var PLAYER_LIMIT = 1;
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
-var GameType = Object.freeze({FFA: 0, TEAMS: 1, EXPERIMENTAL: 2});
+var GameType = Object.freeze({FFA: "Free For All", TEAMS: "Teams", EXPERIMENTAL: "Experimental"});
 var total_players = 0;
 var gp_total_players = 0;
 var max_total_players = 0;
@@ -196,21 +196,28 @@ http.createServer(function (request, response) {
 http.createServer(function (request, response) {
     response.writeHead(200, {"Content-Type": "text/plain"});
 
-    if (request.url.match('stats')){
+    if (request.url.toLowerCase().match('addserv')){
+        console.log("addserv");
+        addServ(request);
+        return;
+    } 
+
+
+    if (request.url.toLowerCase().match('stats')){
         showStats(response);
         return;
     }
 
     var gameType = GameType.FFA;
 
-    if (request.url.match('teams')) {
+    if (request.url.toLowerCase().match('teams')) {
         gameType = GameType.TEAMS;
-    } else if (request.url.match('experimental')) {
+    } else if (request.url.toLowerCase().match('experimental')) {
         gameType = GameType.EXPERIMENTAL;
     }
 
     var list;
-    if (request.url.match('gp')){
+    if (request.url.toLowerCase().match('gp')){
         list = GPserverList;
     } else {
         list = serverList;
@@ -272,6 +279,41 @@ function fetchServerInfo(server) {
             }
         }
     });
+}
+
+function addServ(request){
+    var body = [];
+
+        request.on('error', function(err) {
+            console.error(err);
+          }).on('data', function(chunk) {
+            body.push(chunk);
+          }).on('end', function() {
+            body = Buffer.concat(body).toString();
+            // console.log(body);
+            // At this point, we have the headers, method, url and body, and can now
+            // do whatever we need to in order to respond to this request.
+            try {
+                var serv = JSON.parse(body);
+
+                var found = GPserverList.find(function(element, index, array){
+                    // console.log(element.port);
+                    // console.log(serv.port);
+                    if (element.host === request.headers.host &&
+                        element.gamePort === serv.gamePort &&
+                        element.statsPort === serv.statsPort){
+                        return element;
+                    }
+                    // console.log(element);
+                })
+                // console.log(found);
+                if (!found){
+                    GPserverList.push(new typedServer(serv.name, request.headers.host, serv.gamePort, serv.statsPort, serv.mode))
+                    console.log("serv Added")
+                }
+            } catch (e) {
+            }            
+          });
 }
 
 //excluding statistic fields from JSON for 81 port
