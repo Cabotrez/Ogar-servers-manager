@@ -31,6 +31,8 @@ function Server(name, host, gamePort, statsPort) {
     this.uptime = "";
     this.statistic = [["Time", "Current Players"]];
     this.statisticUpdate = [["Time", "Update(ms)"]];
+
+    this.deleteCounter = 0;
     this.reset = function () {
         this.current_players = 0;
         this.max_players = 0;
@@ -47,7 +49,7 @@ function typedServer(name, host, gamePort, statsPort, gameType) {
     return serv;
 }
 
-var serverList = [];
+var serverList = []; //static server list
 serverList.push(new Server("Master VPS", "178.62.49.237", "443", "88")); //DigitalOcean Master VPS
 serverList.push(new Server("DO 2", "46.101.82.140", "443", "88")); //DigitalOcean 2 
 serverList.push(new Server("OVH ", "149.56.103.53", "443", "88")); //OVH VPS
@@ -59,7 +61,7 @@ serverList.push(new typedServer("OVH experimental","149.56.103.53", "447", "90",
 var totalsFakeServer = new Server("Totals","", "", ""); //fake server for totals stats
 var GPtotalsFakeServer = new Server("GP Totals","", "", ""); //fake server for totals stats
 
-var GPserverList = [];
+var GPserverList = []; //dynamic server list
 // GPserverList.push(new Server("FFA","46.101.82.140", "443", "88"));
 // GPserverList.push(new typedServer("GP TEAMS","46.101.82.140", "444", "88", GameType.TEAMS));
 // GPserverList.push(new typedServer("GP experimental","46.101.82.140", "447", "88", GameType.EXPERIMENTAL));
@@ -85,6 +87,14 @@ setInterval(function () {
 
     GPserverList.forEach(function (item, i, arr) {
         fetchServerInfo(item);
+        if (item.status == ServStatusEnum.DOWN){
+            item.deleteCounter++;
+            // console.log("deleteCounter++");
+        }
+        if (item.deleteCounter >= 6){
+            GPserverList.splice(i, 1);
+            // console.log("deleted");
+        }
     });
    
     //counting totals
