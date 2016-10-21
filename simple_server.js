@@ -14,7 +14,7 @@ var max_total_players = 0;
 var gp_max_total_players = 0;
 var MAX_STATS_DATA_LENGTH = 1000;
 var FETCH_SERVER_INFO_INTERVAL = 5000;
-var DELETE_COUNTER_LIMIT = 60000/FETCH_SERVER_INFO_INTERVAL; // delete dynamic server after 1 min of shutdown
+var DELETE_COUNTER_LIMIT = 120000/FETCH_SERVER_INFO_INTERVAL; // delete dynamic server after 2 min of shutdown
 
 // if server have players count lower than this value, forcing move playres to this server 
 var LOW_PLAYER_LIMIT = 60; 
@@ -231,11 +231,12 @@ http.createServer(function (request, response) {
 
     for (var i = 0; i < alive_servers.length; i++) {
         if (alive_servers[i].current_players < LOW_PLAYER_LIMIT) {
-                if (Math.floor(Math.random() * 10) != 0) { //90% probabily to return this server
+                //if (Math.floor(Math.random() * 10) != 0) { //90% probabily to return this server
+				//100% return this server
                     response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort);
                     response.end();
                     return;
-                }
+                //}
         }
     }
 
