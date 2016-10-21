@@ -17,7 +17,7 @@ var FETCH_SERVER_INFO_INTERVAL = 5000;
 var DELETE_COUNTER_LIMIT = 60000/FETCH_SERVER_INFO_INTERVAL; // delete dynamic server after 1 min of shutdown
 
 // if server have players count lower than this value, forcing move playres to this server 
-var LOW_PLAYER_LIMIT = 30; 
+var LOW_PLAYER_LIMIT = 60; 
 
 function Server(name, host, gamePort, statsPort) {
     this.name = name;
@@ -52,17 +52,14 @@ function typedServer(name, host, gamePort, statsPort, gameType) {
 }
 
 var serverList = []; //static server list
-serverList.push(new Server("Master VPS", "178.62.49.237", "443", "88")); //DigitalOcean Master VPS
-serverList.push(new Server("DO 2", "46.101.82.140", "443", "88")); //DigitalOcean 2 
-serverList.push(new Server("OVH ", "149.56.103.53", "443", "88")); //OVH VPS
+serverList.push(new Server(" Master VPS", "178.62.49.237", 443, 88)); //DigitalOcean Master VPS, space at start for first place after sorting
+serverList.push(new Server("DO 2", "46.101.82.140", 443, 88)); //DigitalOcean 2 
+serverList.push(new Server("OVH ", "149.56.103.53", 443, 88)); //OVH VPS
 //serverList.push(new Server("blob-f0ris.c9users.io","8080","8082"));
 
-serverList.push(new typedServer("OVH teams","149.56.103.53", "444", "89", GameType.TEAMS));
-serverList.push(new typedServer("OVH experimental","149.56.103.53", "447", "90", GameType.EXPERIMENTAL));
+serverList.push(new typedServer("OVH teams","149.56.103.53", 444, 89, GameType.TEAMS));
+serverList.push(new typedServer("OVH experimental","149.56.103.53", 447, 90, GameType.EXPERIMENTAL));
 
-serverList.push(new typedServer("AMZ FFA","54.71.50.103", "443", "88", GameType.FFA));
-serverList.push(new typedServer("AMZ FFA 2","54.71.50.103", "4432", "882", GameType.FFA));
-serverList.push(new typedServer("AMZ exp","54.71.50.103", "447", "90", GameType.EXPERIMENTAL));
 
 var totalsFakeServer = new Server("Totals","", "", ""); //fake server for totals stats
 var GPtotalsFakeServer = new Server("GP Totals","", "", ""); //fake server for totals stats
@@ -76,8 +73,16 @@ var GPserverList = []; //dynamic server list
 setInterval(function () {
     serverList.forEach(function (item, i, arr) {
         fetchServerInfo(item);
+        if (item.status == ServStatusEnum.DOWN){
+            item.deleteCounter++;
+            // console.log("deleteCounter++");
+        }
+        if (item.deleteCounter >= DELETE_COUNTER_LIMIT){
+            serverList.splice(i, 1);
+            // console.log("deleted");
+        }
     });
-
+   
 	//counting totals
 	total_players = 0;
     serverList.forEach(function (item, i, arr) {
@@ -88,6 +93,8 @@ setInterval(function () {
 
     if (total_players > max_total_players)
         max_total_players = total_players;
+
+    serverList.sort(serverSortFunction);
 
     /*************  Google Players**********/
 
@@ -102,7 +109,7 @@ setInterval(function () {
             // console.log("deleted");
         }
     });
-
+   
     //counting totals
     gp_total_players = 0;
     GPserverList.forEach(function (item, i, arr) {
@@ -137,7 +144,7 @@ setInterval(function () {
                 item.statistic.splice(1,1)
                 item.statisticUpdate.splice(1,1)   
             }
-        }
+    }
     }
 
     serverList.forEach(saveStats);
@@ -150,7 +157,7 @@ setInterval(function () {
     if (GPtotalsFakeServer.statistic.length > MAX_STATS_DATA_LENGTH){
         GPtotalsFakeServer.statistic.splice(1,1)
     }
-
+                
 
 }, 4*60*1000); //1 time in 4 min
 
@@ -161,7 +168,7 @@ http.createServer(function (request, response) {
 //show statistic in chart
 http.createServer(function (request, response) {
     response.writeHead(200, {'Content-Type': 'text/html'});
-    if (request.url.match('stats')) {
+     if (request.url.match('stats')) {
         serverList.push(totalsFakeServer);
         response.write(JSON.stringify(serverList, replacerForGraph));
         serverList.splice(serverList.length - 1, 1);
@@ -224,13 +231,13 @@ http.createServer(function (request, response) {
 
     for (var i = 0; i < alive_servers.length; i++) {
         if (alive_servers[i].current_players < LOW_PLAYER_LIMIT) {
-                if (Math.floor(Math.random() * 5) != 0) { //80% probabily to return this server
+                if (Math.floor(Math.random() * 10) != 0) { //90% probabily to return this server
                     response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort);
                     response.end();
                     return;
                 }
-            }
         }
+    }
 
     //uniform players distribution between active servers
     if (alive_servers.length != 0) {
@@ -299,46 +306,46 @@ function showStats(response) {
 function addServ(request){
     var body = [];
 
-    request.on('error', function(err) {
-        console.error(err);
-    }).on('data', function(chunk) {
-        body.push(chunk);
-    }).on('end', function() {
-        body = Buffer.concat(body).toString();
+        request.on('error', function(err) {
+            console.error(err);
+          }).on('data', function(chunk) {
+            body.push(chunk);
+          }).on('end', function() {
+            body = Buffer.concat(body).toString();
             // console.log(body);
             // At this point, we have the headers, method, url and body, and can now
             // do whatever we need to in order to respond to this request.
             try {
                 var servIp = request.headers['x-forwarded-for'] || 
-                                request.connection.remoteAddress || 
-                                request.socket.remoteAddress ||
-                                request.connection.socket.remoteAddress;
+                                         request.connection.remoteAddress || 
+                                         request.socket.remoteAddress ||
+                                         request.connection.socket.remoteAddress;
 				//console.log(servIp);
 				if (servIp.includes("ffff")){
 					servIp = servIp.substring(servIp.indexOf("ffff") + 5,servIp.length)
 				}
 				//console.log(servIp);
                 var serv = JSON.parse(body);
-                var found = GPserverList.find(function(element, index, array){
+                var found = serverList.find(function(element, index, array){
                     // console.log(element.port);
                     // console.log(serv.port);
                     if (element.host === servIp &&
                         element.gamePort === serv.gamePort &&
                         element.statsPort === serv.statsPort){
                         return element;
-                }
+                    }
                     // console.log(element);
                 })
                 console.log(found);
                 if (!found){
-
-                    GPserverList.push(new typedServer(serv.name, servIp, serv.gamePort, serv.statsPort, serv.mode))
+					
+                    serverList.push(new typedServer(serv.name, servIp, serv.gamePort, serv.statsPort, serv.mode))
                     console.log("serv Added")
                 }
             } catch (e) {
-                console.log(e);
+				console.log(e);
             }            
-        });
+          });
 }
 
 //excluding statistic fields from JSON for 81 port
@@ -348,11 +355,20 @@ function replacer(key,value)
         key== "statisticUpdate" ||
         key== "gameType" ||
         key == "deleteCounter") return undefined;
-        else return value;
+    else return value;
 }
 
 function replacerForGraph(key,value)
 {
     if (key=="statisticUpdate") return undefined;
     else return value;
+}
+
+function serverSortFunction(a, b){
+    var nameA = a.name.toLowerCase(), nameB = b.name.toLowerCase();
+    if (nameA < nameB) //sort string ascending
+        return -1;
+    if (nameA > nameB)
+        return 1;
+    return 0; //default return value (no sorting)
 }
