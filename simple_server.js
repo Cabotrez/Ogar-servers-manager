@@ -217,7 +217,8 @@ http.createServer(function (request, response) {
 
     var list;
     if (request.url.toLowerCase().match('gp')){
-        list = GPserverList;
+        //list = GPserverList;
+        list = serverList;
     } else {
         list = serverList;
     }
