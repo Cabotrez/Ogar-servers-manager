@@ -17,7 +17,8 @@ var FETCH_SERVER_INFO_INTERVAL = 5000;
 var DELETE_COUNTER_LIMIT = 120000/FETCH_SERVER_INFO_INTERVAL; // delete dynamic server after 2 min of shutdown
 
 // if server have players count lower than this value, forcing move playres to this server 
-var LOW_PLAYER_LIMIT = 60; 
+var LOW_PLAYER_LIMIT = 30; 
+var NORMAL_PLAYER_LIMIT = 120; 
 
 function Server(name, host, gamePort, statsPort) {
     this.name = name;
@@ -231,12 +232,22 @@ http.createServer(function (request, response) {
     });
 
     for (var i = 0; i < alive_servers.length; i++) {
-        if (alive_servers[i].current_players < LOW_PLAYER_LIMIT) {
-                //if (Math.floor(Math.random() * 10) != 0) { //90% probabily to return this server
-				//100% return this server
-                    response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort);
+        if (alive_servers[i].current_players < NORMAL_PLAYER_LIMIT) {
+				var chance =  1 - alive_servers[i].current_players/NORMAL_PLAYER_LIMIT;
+				if (Math.random() < chance || alive_servers[i].current_players < LOW_PLAYER_LIMIT){
+					response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort);
                     response.end();
                     return;
+				} /*else if (i < alive_servers.length - 1){
+					response.write(alive_servers[i+1].host + ":" + alive_servers[i+1].gamePort);
+                    response.end();
+                    return;
+				}*/
+                //if (Math.floor(Math.random() * 10) != 0) { //90% probabily to return this server
+				//100% return this server
+                    //response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort);
+                    //response.end();
+                    //return;
                 //}
         }
     }
