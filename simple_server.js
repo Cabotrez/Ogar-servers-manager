@@ -1,3 +1,17 @@
+/*  Ogar-server-manager is a nodejs script to manage,get statistics and distribute players over Ogar servers
+    Copyright (C) 2016  Zakhariev Anton
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software Foundation,
+    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA */
+
 var http = require("http");
 var request = require("request");
 // var ejs = require("ejs");
@@ -83,7 +97,7 @@ setInterval(function () {
             // console.log("deleted");
         }
     });
-   
+    
 	//counting totals
 	total_players = 0;
     serverList.forEach(function (item, i, arr) {
@@ -110,7 +124,7 @@ setInterval(function () {
             // console.log("deleted");
         }
     });
-   
+    
     //counting totals
     gp_total_players = 0;
     GPserverList.forEach(function (item, i, arr) {
@@ -145,7 +159,7 @@ setInterval(function () {
                 item.statistic.splice(1,1)
                 item.statisticUpdate.splice(1,1)   
             }
-    }
+        }
     }
 
     serverList.forEach(saveStats);
@@ -158,7 +172,7 @@ setInterval(function () {
     if (GPtotalsFakeServer.statistic.length > MAX_STATS_DATA_LENGTH){
         GPtotalsFakeServer.statistic.splice(1,1)
     }
-                
+    
 
 }, 4*60*1000); //1 time in 4 min
 
@@ -169,7 +183,7 @@ http.createServer(function (request, response) {
 //show statistic in chart
 http.createServer(function (request, response) {
     response.writeHead(200, {'Content-Type': 'text/html'});
-     if (request.url.match('stats')) {
+    if (request.url.match('stats')) {
         serverList.push(totalsFakeServer);
         response.write(JSON.stringify(serverList, replacerForGraph));
         serverList.splice(serverList.length - 1, 1);
@@ -233,22 +247,22 @@ http.createServer(function (request, response) {
 
     for (var i = 0; i < alive_servers.length; i++) {
         if (alive_servers[i].current_players < NORMAL_PLAYER_LIMIT) {
-				var chance =  1 - alive_servers[i].current_players/NORMAL_PLAYER_LIMIT;
-				if (Math.random() < chance || alive_servers[i].current_players < LOW_PLAYER_LIMIT){
-					response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort);
-                    response.end();
-                    return;
-				} /*else if (i < alive_servers.length - 1){
-					response.write(alive_servers[i+1].host + ":" + alive_servers[i+1].gamePort);
-                    response.end();
-                    return;
-				}*/
-                //if (Math.floor(Math.random() * 10) != 0) { //90% probabily to return this server
-				//100% return this server
-                    //response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort);
-                    //response.end();
-                    //return;
-                //}
+            var chance =  1 - alive_servers[i].current_players/NORMAL_PLAYER_LIMIT;
+            if (Math.random() < chance || alive_servers[i].current_players < LOW_PLAYER_LIMIT){
+                response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort);
+                response.end();
+                return;
+            } /*else if (i < alive_servers.length - 1){
+                response.write(alive_servers[i+1].host + ":" + alive_servers[i+1].gamePort);
+                response.end();
+                return;
+            }*/
+            //if (Math.floor(Math.random() * 10) != 0) { //90% probabily to return this server
+            //100% return this server
+            //response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort);
+            //response.end();
+            //return;
+            //}
         }
     }
 
@@ -298,7 +312,7 @@ function showStats(response) {
     response.writeHead(200, {"Content-Type": "text/plain"});
 
     var totals = [{'total_players': total_players, 'max_total_players': max_total_players},
-                  {'gp_total_players': gp_total_players, 'gp_max_total_players': gp_max_total_players}]; 
+    {'gp_total_players': gp_total_players, 'gp_max_total_players': gp_max_total_players}]; 
 
     serverList.push(totals[0]);
     
@@ -319,20 +333,20 @@ function showStats(response) {
 function addServ(request){
     var body = [];
 
-        request.on('error', function(err) {
-            console.error(err);
-          }).on('data', function(chunk) {
-            body.push(chunk);
-          }).on('end', function() {
-            body = Buffer.concat(body).toString();
+    request.on('error', function(err) {
+        console.error(err);
+    }).on('data', function(chunk) {
+        body.push(chunk);
+    }).on('end', function() {
+        body = Buffer.concat(body).toString();
             // console.log(body);
             // At this point, we have the headers, method, url and body, and can now
             // do whatever we need to in order to respond to this request.
             try {
                 var servIp = request.headers['x-forwarded-for'] || 
-                                         request.connection.remoteAddress || 
-                                         request.socket.remoteAddress ||
-                                         request.connection.socket.remoteAddress;
+                request.connection.remoteAddress || 
+                request.socket.remoteAddress ||
+                request.connection.socket.remoteAddress;
 				//console.log(servIp);
 				if (servIp.includes("ffff")){
 					servIp = servIp.substring(servIp.indexOf("ffff") + 5,servIp.length)
@@ -346,19 +360,19 @@ function addServ(request){
                         element.gamePort === serv.gamePort &&
                         element.statsPort === serv.statsPort){
                         return element;
-                    }
+                }
                     // console.log(element);
                 })
                 console.log(found);
                 if (!found){
-					
+                   
                     serverList.push(new typedServer(serv.name, servIp, serv.gamePort, serv.statsPort, serv.mode))
                     console.log("serv Added")
                 }
             } catch (e) {
-				console.log(e);
+                console.log(e);
             }            
-          });
+        });
 }
 
 //excluding statistic fields from JSON for 81 port
@@ -368,7 +382,7 @@ function replacer(key,value)
         key== "statisticUpdate" ||
         key== "gameType" ||
         key == "deleteCounter") return undefined;
-    else return value;
+        else return value;
 }
 
 function replacerForGraph(key,value)
