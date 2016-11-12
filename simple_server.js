@@ -17,6 +17,8 @@ var request = require("request");
 // var ejs = require("ejs");
 var fs = require("fs");
 var path = require('path');
+var Server = require('./models/server.js');
+var AppInfo = require('./models/appinfo.js');
 
 // CONSTANTS
 //var PLAYER_LIMIT = 1;
@@ -34,31 +36,6 @@ var DELETE_COUNTER_LIMIT = 120000/FETCH_SERVER_INFO_INTERVAL; // delete dynamic 
 var LOW_PLAYER_LIMIT = 30; 
 var NORMAL_PLAYER_LIMIT = 120; 
 
-function Server(name, host, gamePort, statsPort) {
-    this.name = name;
-    this.host = host;
-    this.gameType = GameType.FFA;
-    this.current_players = 0;
-    this.max_players = 0;
-    this.status = ServStatusEnum.DOWN;
-    this.gamemode = "";
-    this.gamePort = gamePort;
-    this.statsPort = statsPort;
-    this.update_time = "";
-    this.uptime = "";
-    this.statistic = [["Time", "Current Players"]];
-    this.statisticUpdate = [["Time", "Update(ms)"]];
-
-    this.deleteCounter = 0;
-    this.reset = function () {
-        this.current_players = 0;
-        this.max_players = 0;
-        this.status = ServStatusEnum.DOWN;
-        this.update_time = "";
-        this.uptime = "";
-        this.gamemode = "";
-    }
-}
 
 function typedServer(name, host, gamePort, statsPort, gameType) {
     serv = new Server(name, host, gamePort, statsPort);
@@ -83,6 +60,9 @@ var GPserverList = []; //dynamic server list
 // GPserverList.push(new Server("FFA","46.101.82.140", "443", "88"));
 // GPserverList.push(new typedServer("GP TEAMS","46.101.82.140", "444", "88", GameType.TEAMS));
 // GPserverList.push(new typedServer("GP experimental","46.101.82.140", "447", "88", GameType.EXPERIMENTAL));
+
+//clients versions
+var clientsVersions = {amazon: new AppInfo(65, "a4.0.8.2", "http://f0ris.xyz/"), gp: new AppInfo(65, "gp4.0.8.2", ""), testVersion: new AppInfo(72, "a_fb_4.0.9.2", "")};
 
 //getting servers' info with some interval
 setInterval(function () {
@@ -210,6 +190,11 @@ http.createServer(function (request, response) {
 http.createServer(function (request, response) {
     response.writeHead(200, {"Content-Type": "text/plain"});
 
+    if (request.url.toLowerCase().match('cl_ver')){
+        showClientsVersions(response);
+        return;
+    }
+
     if (request.url.toLowerCase().match('addserv')){
         console.log("addserv");
         addServ(request);
@@ -329,6 +314,11 @@ function showStats(response) {
     serverList.splice(serverList.length - 1, 1);
     GPserverList.splice(GPserverList.length - 1, 1);//deleting temporary objects
 };
+
+function showClientsVersions(response){
+    response.write(JSON.stringify({versions:clientsVersions}));
+    response.end();
+}
 
 function addServ(request){
     var body = [];
