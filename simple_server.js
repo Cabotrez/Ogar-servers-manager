@@ -280,6 +280,7 @@ function fetchServerInfo(server) {
                 //console.log(body);
                 obj = JSON.parse(body);
                 server.current_players = obj.current_players;
+                server.spectators = obj.spectators;
                 server.max_players = obj.max_players;
                 server.status = ServStatusEnum.UP;
                 server.update_time = obj.update_time;
