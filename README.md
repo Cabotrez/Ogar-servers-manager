@@ -15,11 +15,12 @@ Reboot and check next:
 | URL or PORT      | Description      |
 | ------------- |:-------------:|
 | /      | Choosing and giving to you server's ip with FFA game mode |
-| /teams      | Choosing and giving to you server's ip with teams game mode |
-| /experimental      | Choosing and giving to you server's ip with experimental game mode |
-| /stats or :81      | Same as port 81, returning back list of all servers in JSON |
-| :82    | Show graphical statistic of servers |
+| /\<game mode name\>      | Choosing and giving to you server's ip with selected game mode |
+| /stats or :81      | Returning back list of all servers with their params in JSON |
+| :82    | Show servers' current players statistic in graphical form |
 | :82/stats    | Returning back statistic's data of server in JSON |
+| :83   | Show servers' update time statistic in graphical form |
+| :83/stats    | Returning back statistic's data of server in JSON (with update time) |
 
 ![alt text](https://raw.githubusercontent.com/F0RIS/Ogar-servers-manager/master/list_demo.png "Stats png")
 

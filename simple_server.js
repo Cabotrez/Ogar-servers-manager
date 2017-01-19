@@ -23,7 +23,7 @@ var AppInfo = require('./models/appinfo.js');
 // CONSTANTS
 //var PLAYER_LIMIT = 1;
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
-var GameType = Object.freeze({FFA: "Free For All", TEAMS: "Teams", EXPERIMENTAL: "Experimental"});
+var GameType = Object.freeze({FFA: "Free For All", TEAMS: "Teams", EXPERIMENTAL: "Experimental", INSTANT_MERGE:"InstantMerge"});
 var total_players = 0;
 var gp_total_players = 0;
 var max_total_players = 0;
@@ -186,37 +186,60 @@ http.createServer(function (request, response) {
     });
 }).listen(82);
 
+//show statistic in chart
+http.createServer(function (request, response) {
+    response.writeHead(200, {'Content-Type': 'text/html'});
+    if (request.url.match('stats')) {
+        response.write(JSON.stringify(serverList));
+        response.end();
+        return;
+    }
+
+    //since we are in a request handler function
+    //we're using readFile instead of readFileSync
+    fs.readFile(path.join(__dirname, 'chart_template_update.html'), 'utf-8', function (err, content) {
+        if (err) {
+            response.end('error occurred'+err);
+            return;
+        }
+        response.end(content);
+    });
+}).listen(83);
+
 //choosing and giving back server's ip
 http.createServer(function (request, response) {
     response.writeHead(200, {"Content-Type": "text/plain"});
-
-    if (request.url.toLowerCase().match('cl_ver')){
+	
+	var requestLowerCase = request.url.toLowerCase()
+    if (requestLowerCase.match('cl_ver')){
         showClientsVersions(response);
         return;
     }
 
-    if (request.url.toLowerCase().match('addserv')){
+    if (requestLowerCase.match('addserv')){
         console.log("addserv");
         addServ(request);
         return;
     } 
 
 
-    if (request.url.toLowerCase().match('stats')){
+    if (requestLowerCase.match('stats')){
         showStats(response);
         return;
     }
 
     var gameType = GameType.FFA;
 
-    if (request.url.toLowerCase().match('teams')) {
+    if (requestLowerCase.match('teams')) {
         gameType = GameType.TEAMS;
-    } else if (request.url.toLowerCase().match('experimental')) {
+    } else if (requestLowerCase.match('experimental')) {
         gameType = GameType.EXPERIMENTAL;
+    } else if (requestLowerCase.match('instantmerge')) {
+        gameType = GameType.INSTANT_MERGE;
     }
 
     var list;
-    if (request.url.toLowerCase().match('gp')){
+    if (requestLowerCase.match('gp')){
         //list = GPserverList;
         list = serverList;
     } else {
