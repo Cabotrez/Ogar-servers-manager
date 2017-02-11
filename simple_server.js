@@ -23,7 +23,7 @@ var AppInfo = require('./models/appinfo.js');
 // CONSTANTS
 //var PLAYER_LIMIT = 1;
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
-var GameType = Object.freeze({FFA: "Free For All", TEAMS: "Teams", EXPERIMENTAL: "Experimental", INSTANT_MERGE:"InstantMerge"});
+var GameType = Object.freeze({FFA: "Free For All", TEAMS: "Teams", EXPERIMENTAL: "Experimental", INSTANT_MERGE:"InstantMerge", CRAZY:"CRAZY"});
 var total_players = 0;
 var gp_total_players = 0;
 var max_total_players = 0;
@@ -236,6 +236,8 @@ http.createServer(function (request, response) {
         gameType = GameType.EXPERIMENTAL;
     } else if (requestLowerCase.match('instantmerge')) {
         gameType = GameType.INSTANT_MERGE;
+    } else if (requestLowerCase.match('crazy')) {
+        gameType = GameType.CRAZY;
     }
 
     var list;
