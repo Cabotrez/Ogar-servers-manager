@@ -256,8 +256,8 @@ http.createServer(function (request, response) {
     });
 
     for (var i = 0; i < alive_servers.length; i++) {
-        if (alive_servers[i].current_players < NORMAL_PLAYER_LIMIT) {
-            var chance =  1 - alive_servers[i].current_players/NORMAL_PLAYER_LIMIT;
+        if (alive_servers[i].current_players < alive_servers[i].max_players) {
+            var chance =  1 - alive_servers[i].current_players/alive_servers[i].max_players;
             if (Math.random() < chance || alive_servers[i].current_players < LOW_PLAYER_LIMIT){
                 response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort);
                 response.end();
