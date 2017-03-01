@@ -62,7 +62,7 @@ var GPserverList = []; //dynamic server list
 // GPserverList.push(new typedServer("GP experimental","46.101.82.140", "447", "88", GameType.EXPERIMENTAL));
 
 //clients versions
-var clientsVersions = {amazon: new AppInfo(74, "fb_a4.0.9.3", ""), gp: new AppInfo(74, "gp4.0.9.3", ""), testVersion: new AppInfo(74, "fb_a4.0.9.3", "")};
+var clientsVersions = {amazon: new AppInfo(81, "fb_a4.2.4", ""), gp: new AppInfo(81, "gp4.2.4", ""), testVersion: new AppInfo(81, "fb_a4.2.4", ""), ios: new AppInfo(1, "", "")};
 
 //getting servers' info with some interval
 setInterval(function () {
