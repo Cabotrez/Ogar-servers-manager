@@ -28,7 +28,8 @@ var GameType = Object.freeze({
     TEAMS: "Teams",
     EXPERIMENTAL: "Experimental",
     INSTANT_MERGE: "InstantMerge",
-    CRAZY: "CRAZY"
+    CRAZY: "CRAZY",
+    SELF_FEED: "SelfFeed"
 });
 var total_players = 0;
 var gp_total_players = 0;
@@ -38,7 +39,7 @@ var MAX_STATS_DATA_LENGTH = 1000;
 var FETCH_SERVER_INFO_INTERVAL = 5000;
 var DELETE_COUNTER_LIMIT = 120000 / FETCH_SERVER_INFO_INTERVAL; // delete dynamic server after 2 min of shutdown
 
-// if server have players count lower than this value, forcing move playres to this server 
+// if server have players count lower than this value, forcing move players to this server 
 var LOW_PLAYER_LIMIT = 30;
 var NORMAL_PLAYER_LIMIT = 120;
 
@@ -69,9 +70,9 @@ var GPserverList = []; //dynamic server list
 
 //clients versions
 var clientsVersions = {
-    amazon: new AppInfo(81, "fb_a4.2.4", ""),
-    gp: new AppInfo(81, "gp4.2.4", ""),
-    testVersion: new AppInfo(81, "fb_a4.2.4", ""),
+    amazon: new AppInfo(89, "a_fr4.5.1", ""),
+    gp: new AppInfo(89, "gp_fr4.5.1", ""),
+    testVersion: new AppInfo(89, "", ""),
     ios: new AppInfo(1, "", "")
 };
 
@@ -249,6 +250,8 @@ http.createServer(function (request, response) {
         gameType = GameType.INSTANT_MERGE;
     } else if (requestLowerCase.match('crazy')) {
         gameType = GameType.CRAZY;
+    } else if (requestLowerCase.match('selffeed')) {
+        gameType = GameType.SELF_FEED;
     }
 
     var list;
@@ -270,7 +273,7 @@ http.createServer(function (request, response) {
         if (alive_servers[i].current_players < alive_servers[i].max_players) {
             var chance = 1 - alive_servers[i].current_players / alive_servers[i].max_players;
             if (Math.random() < chance || alive_servers[i].current_players < LOW_PLAYER_LIMIT) {
-                response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort);
+                response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort + "\n" + alive_servers[i].gameType);
                 response.end();
                 return;
             }
@@ -291,7 +294,9 @@ http.createServer(function (request, response) {
     //uniform players distribution between active servers
     if (alive_servers.length != 0) {
         index = Math.floor(Math.random() * alive_servers.length);
-        response.write(alive_servers[index].host + ":" + alive_servers[index].gamePort);
+        //console.log(alive_servers[index]);
+        response.write(alive_servers[index].host + ":" + alive_servers[index].gamePort + "\n" + alive_servers[index].gameType);
+        //console.log(alive_servers[index].host + ":" + alive_servers[index].gamePort + "\n" + alive_servers[index].gameType);
     }
 
     response.end();
@@ -391,7 +396,7 @@ function addServ(request) {
                 }
                 // console.log(element);
             })
-            console.log(found);
+            //console.log(found);
             if (!found) {
 
                 serverList.push(new typedServer(serv.name, servIp, serv.gamePort, serv.statsPort, serv.mode))
