@@ -24,7 +24,7 @@ var AppInfo = require('./models/appinfo.js');
 //var PLAYER_LIMIT = 1;
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
 var GameType = Object.freeze({
-    FFA: "Free For All",
+    FFA: "FFA",
     TEAMS: "Teams",
     EXPERIMENTAL: "Experimental",
     INSTANT_MERGE: "InstantMerge",
@@ -50,7 +50,7 @@ function typedServer(name, host, gamePort, statsPort, gameType) {
     return serv;
 }
 
-var serverList = []; //static server list
+var serverList = []; //servers list
 serverList.push(new Server(" Master VPS", "178.62.49.237", 443, 88)); //DigitalOcean Master VPS, space at start for first place after sorting
 serverList.push(new Server("DO 2", "46.101.82.140", 443, 88)); //DigitalOcean 2 
 serverList.push(new Server("OVH ", "149.56.103.53", 443, 88)); //OVH VPS
