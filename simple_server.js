@@ -337,7 +337,7 @@ function fetchServerInfo(server) {
 
 //return servers' stats 
 function showStats(response) {
-    response.writeHead(200, {"Content-Type": "text/plain"});
+    response.writeHead(200, {"Content-Type": "application/json"});
 
     var totals = [{'total_players': total_players, 'max_total_players': max_total_players},
         {'gp_total_players': gp_total_players, 'gp_max_total_players': gp_max_total_players}];

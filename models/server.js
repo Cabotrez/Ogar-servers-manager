@@ -1,5 +1,5 @@
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
-var GameType = Object.freeze({FFA: "Free For All", TEAMS: "Teams", EXPERIMENTAL: "Experimental"});
+var GameType = Object.freeze({FFA: "FFA", TEAMS: "Teams", EXPERIMENTAL: "Experimental"});
 
 module.exports = function Server(name, host, gamePort, statsPort) {
     this.name = name;
