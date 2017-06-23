@@ -44,9 +44,10 @@ var LOW_PLAYER_LIMIT = 30;
 var NORMAL_PLAYER_LIMIT = 120;
 
 
-function typedServer(name, host, gamePort, statsPort, gameType) {
+function typedServer(name, host, gamePort, statsPort, gameType, apiId) {
     serv = new Server(name, host, gamePort, statsPort);
     serv.gameType = gameType;
+    serv.gamemode_api_id = apiId;
     return serv;
 }
 
@@ -328,6 +329,7 @@ function fetchServerInfo(server) {
                 server.update_time = obj.update_time;
                 server.uptime = obj.uptime;
                 server.gamemode = obj.gamemode;
+                server.gamemode_api_id = obj.gamemode_api_id;
             } catch (e) {
                 server.reset();
             }
@@ -399,7 +401,7 @@ function addServ(request) {
             //console.log(found);
             if (!found) {
 
-                serverList.push(new typedServer(serv.name, servIp, serv.gamePort, serv.statsPort, serv.mode))
+                serverList.push(new typedServer(serv.name, servIp, serv.gamePort, serv.statsPort, serv.mode, serv.mode_api_id))
                 console.log("serv Added")
             }
         } catch (e) {
