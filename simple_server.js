@@ -330,6 +330,7 @@ function fetchServerInfo(server) {
                 server.uptime = obj.uptime;
                 server.gamemode = obj.gamemode;
                 server.gamemode_api_id = obj.gamemode_api_id;
+                server.name = obj.server_name;
             } catch (e) {
                 server.reset();
             }
