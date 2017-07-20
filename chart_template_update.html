@@ -12,7 +12,7 @@
           // document.getElementById("demo").innerHTML = xhttp.responseText;
           //console.log(xhttp.responseText);
           serverList = JSON.parse(xhttp.responseText);
-          console.log(serverList[0].statistic.length);
+          console.log(serverList[0].statisticUpdate.length);
           google.charts.load('current', {'packages':['corechart']});
           google.charts.setOnLoadCallback(callback);
           // return JSON.parse(xhttp.responseText);

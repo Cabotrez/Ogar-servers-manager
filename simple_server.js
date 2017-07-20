@@ -21,21 +21,16 @@ var Server = require('./models/server.js');
 var AppInfo = require('./models/appinfo.js');
 
 // CONSTANTS
-//var PLAYER_LIMIT = 1;
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
-var GameType = Object.freeze({
-    FFA: "FFA",
-    TEAMS: "Teams",
-    EXPERIMENTAL: "Experimental",
-    INSTANT_MERGE: "InstantMerge",
-    CRAZY: "CRAZY",
-    SELF_FEED: "SelfFeed"
-});
+var GameType = require("./models/gameType")
 var total_players = 0;
 var gp_total_players = 0;
 var max_total_players = 0;
 var gp_max_total_players = 0;
-var MAX_STATS_DATA_LENGTH = 1000;
+var gameModeTotals = {}; //stores players count for each game mode
+var gameModesCount = {}; //count of servers for each game mode
+
+var MAX_STATS_DATA_LENGTH = 1300;
 var FETCH_SERVER_INFO_INTERVAL = 5000;
 var DELETE_COUNTER_LIMIT = 120000 / FETCH_SERVER_INFO_INTERVAL; // delete dynamic server after 2 min of shutdown
 
@@ -53,28 +48,20 @@ function typedServer(name, host, gamePort, statsPort, gameType, apiId) {
 
 var serverList = []; //servers list
 serverList.push(new Server(" Master VPS", "178.62.49.237", 443, 88)); //DigitalOcean Master VPS, space at start for first place after sorting
-serverList.push(new Server("DO 2", "46.101.82.140", 443, 88)); //DigitalOcean 2 
-serverList.push(new Server("OVH ", "149.56.103.53", 443, 88)); //OVH VPS
 //serverList.push(new Server("blob-f0ris.c9users.io","8080","8082"));
-
-serverList.push(new typedServer("OVH teams", "149.56.103.53", 444, 89, GameType.TEAMS));
-serverList.push(new typedServer("OVH experimental", "149.56.103.53", 447, 90, GameType.EXPERIMENTAL));
 
 
 var totalsFakeServer = new Server("Totals", "", "", ""); //fake server for totals stats
 var GPtotalsFakeServer = new Server("GP Totals", "", "", ""); //fake server for totals stats
 
 var GPserverList = []; //dynamic server list
-// GPserverList.push(new Server("FFA","46.101.82.140", "443", "88"));
-// GPserverList.push(new typedServer("GP TEAMS","46.101.82.140", "444", "88", GameType.TEAMS));
-// GPserverList.push(new typedServer("GP experimental","46.101.82.140", "447", "88", GameType.EXPERIMENTAL));
 
 //clients versions
 var clientsVersions = {
-    amazon: new AppInfo(89, "a_fr4.5.1", ""),
-    gp: new AppInfo(89, "gp_fr4.5.1", ""),
+    amazon: new AppInfo(104, "a_fr4.9.5", ""),
+    gp: new AppInfo(104, "gp_fr4.9.5", ""),
     testVersion: new AppInfo(89, "", ""),
-    ios: new AppInfo(1, "", "")
+    ios: new AppInfo("1.0.3", "", "")
 };
 
 //getting servers' info with some interval
@@ -93,9 +80,17 @@ setInterval(function () {
 
     //counting totals
     total_players = 0;
+    for (key in gameModeTotals) {
+        gameModeTotals[key] = 0;
+    }
+    for (key in gameModesCount) {
+        gameModesCount[key] = 0;
+    }
     serverList.forEach(function (item, i, arr) {
         if (item.status == ServStatusEnum.UP) {
             total_players += item.current_players;
+            gameModeTotals[item.gameType] += item.current_players;
+            gameModesCount[item.gameType] += 1;
         }
     });
 
@@ -140,13 +135,11 @@ setInterval(function () {
     totalsFakeServer.statistic.push([timeStr, total_players]);
     GPtotalsFakeServer.statistic.push([timeStr, gp_total_players]);
 
-
     function saveStats(item, i, arr) {
         if (item.status == ServStatusEnum.UP) {
             item.statistic.push([timeStr, Math.floor(item.current_players)]);
             item.statisticUpdate.push([timeStr, Math.floor(item.update_time)]);
         }
-
         if (typeof item.statistic != 'undefined') {
             if (item.statistic.length > MAX_STATS_DATA_LENGTH) {
                 item.statistic.splice(1, 1)
@@ -158,15 +151,12 @@ setInterval(function () {
     serverList.forEach(saveStats);
     GPserverList.forEach(saveStats);
 
-
     if (totalsFakeServer.statistic.length > MAX_STATS_DATA_LENGTH) {
         totalsFakeServer.statistic.splice(1, 1)
     }
     if (GPtotalsFakeServer.statistic.length > MAX_STATS_DATA_LENGTH) {
         GPtotalsFakeServer.statistic.splice(1, 1)
     }
-
-
 }, 4 * 60 * 1000); //1 time in 4 min
 
 http.createServer(function (request, response) {
@@ -177,8 +167,11 @@ http.createServer(function (request, response) {
 http.createServer(function (request, response) {
     response.writeHead(200, {'Content-Type': 'text/html'});
     if (request.url.match('stats')) {
+        response.writeHead(200, {'Content-Type': 'application/json'});
         serverList.push(totalsFakeServer);
-        response.write(JSON.stringify(serverList, replacerForGraph));
+        response.write(JSON.stringify(serverList, (key,value) => 
+            key == "statisticUpdate" ? undefined : value 
+        ));
         serverList.splice(serverList.length - 1, 1);
         response.end();
         return;
@@ -203,7 +196,10 @@ http.createServer(function (request, response) {
 http.createServer(function (request, response) {
     response.writeHead(200, {'Content-Type': 'text/html'});
     if (request.url.match('stats')) {
-        response.write(JSON.stringify(serverList));
+        response.writeHead(200, {'Content-Type': 'application/json'});
+        response.write(JSON.stringify(serverList, (key,value) => 
+            key == "statistic" ? undefined : value 
+        ));
         response.end();
         return;
     }
@@ -278,17 +274,6 @@ http.createServer(function (request, response) {
                 response.end();
                 return;
             }
-            /*else if (i < alive_servers.length - 1){
-             response.write(alive_servers[i+1].host + ":" + alive_servers[i+1].gamePort);
-             response.end();
-             return;
-             }*/
-            //if (Math.floor(Math.random() * 10) != 0) { //90% probabily to return this server
-            //100% return this server
-            //response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort);
-            //response.end();
-            //return;
-            //}
         }
     }
 
@@ -311,12 +296,10 @@ function fetchServerInfo(server) {
         method: "GET",
         timeout: 600
     }, function (error, response, body) {
-
         if (typeof error != 'undefined') {
             //console.log(error);
             server.reset();
         }
-
         if (typeof body != 'undefined') {
             try {
                 a = JSON.parse(body);
@@ -342,8 +325,18 @@ function fetchServerInfo(server) {
 function showStats(response) {
     response.writeHead(200, {"Content-Type": "application/json"});
 
-    var totals = [{'total_players': total_players, 'max_total_players': max_total_players},
-        {'gp_total_players': gp_total_players, 'gp_max_total_players': gp_max_total_players}];
+    var gameModePerc = {};//create new object with percents
+    for (key in gameModeTotals) {
+        gameModePerc[key] = (gameModeTotals[key] / total_players * 100).toFixed(1);
+    }
+
+    var totals = [{'total_players': total_players, 
+                   'max_total_players': max_total_players, 
+                   'gameModeTotals': gameModeTotals,
+                   'gameModesPercentage': gameModePerc,
+                   'gameModesCount': gameModesCount},
+                  {'gp_total_players': gp_total_players, 
+                   'gp_max_total_players': gp_max_total_players}];
 
     serverList.push(totals[0]);
 
@@ -411,18 +404,19 @@ function addServ(request) {
     });
 }
 
+var filteredFields = Object.freeze({
+    statistic: true,
+    statisticUpdate: true,
+    gameType: true,
+    deleteCounter: true,
+})
+
 //excluding statistic fields from JSON for 81 port
 function replacer(key, value) {
-    if (key == "statistic" ||
-        key == "statisticUpdate" ||
-        key == "gameType" ||
-        key == "deleteCounter") return undefined;
-    else return value;
-}
-
-function replacerForGraph(key, value) {
-    if (key == "statisticUpdate") return undefined;
-    else return value;
+    if (key in filteredFields) {
+        return undefined;
+    }
+    return value;
 }
 
 function serverSortFunction(a, b) {
