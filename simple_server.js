@@ -28,7 +28,7 @@ var gp_total_players = 0;
 var max_total_players = 0;
 var gp_max_total_players = 0;
 var gameModeTotals = {}; //stores players count for each game mode
-var gameModesCount = {}; //count of servers for each game mode
+var gameModesServers = {}; //count of servers for each game mode
 
 var MAX_STATS_DATA_LENGTH = 1300;
 var FETCH_SERVER_INFO_INTERVAL = 5000;
@@ -83,14 +83,14 @@ setInterval(function () {
     for (key in gameModeTotals) {
         gameModeTotals[key] = 0;
     }
-    for (key in gameModesCount) {
-        gameModesCount[key] = 0;
+    for (key in gameModesServers) {
+        gameModesServers[key] = 0;
     }
     serverList.forEach(function (item, i, arr) {
         if (item.status == ServStatusEnum.UP) {
             total_players += item.current_players;
             gameModeTotals[item.gameType] += item.current_players;
-            gameModesCount[item.gameType] += 1;
+            gameModesServers[item.gameType] += 1;
         }
     });
 
@@ -327,14 +327,14 @@ function showStats(response) {
 
     var gameModePerc = {};//create new object with percents
     for (key in gameModeTotals) {
-        gameModePerc[key] = (gameModeTotals[key] / total_players * 100).toFixed(1);
+        gameModePerc[key] = parseFloat((gameModeTotals[key] / total_players * 100).toFixed(1));
     }
 
     var totals = [{'total_players': total_players, 
                    'max_total_players': max_total_players, 
                    'gameModeTotals': gameModeTotals,
                    'gameModesPercentage': gameModePerc,
-                   'gameModesCount': gameModesCount},
+                   'gameModesServers': gameModesServers},
                   {'gp_total_players': gp_total_players, 
                    'gp_max_total_players': gp_max_total_players}];
 
