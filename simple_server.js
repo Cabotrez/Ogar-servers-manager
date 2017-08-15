@@ -58,10 +58,10 @@ var GPserverList = []; //dynamic server list
 
 //clients versions
 var clientsVersions = {
-    amazon: new AppInfo(104, "a_fr4.9.5", ""),
-    gp: new AppInfo(104, "gp_fr4.9.5", ""),
+    amazon: new AppInfo(108, "a_fr5.0.1", ""),
+    gp: new AppInfo(111, "gp_fr5.1.2", ""),
     testVersion: new AppInfo(89, "", ""),
-    ios: new AppInfo("1.0.3", "", "")
+    ios: new AppInfo("1.0.6", "", "")
 };
 
 //getting servers' info with some interval
@@ -242,7 +242,7 @@ http.createServer(function (request, response) {
     if (requestLowerCase.match('teams')) {
         gameType = GameType.TEAMS;
     } else if (requestLowerCase.match('experimental')) {
-        gameType = GameType.EXPERIMENTAL;
+        gameType = GameType.EXPERIMENTAL;   
     } else if (requestLowerCase.match('instantmerge')) {
         gameType = GameType.INSTANT_MERGE;
     } else if (requestLowerCase.match('crazy')) {
@@ -265,11 +265,13 @@ http.createServer(function (request, response) {
             alive_servers.push(item);
         }
     });
+    
+    var lowPlayerLimit = (gameType == GameType.FFA ? 65 : LOW_PLAYER_LIMIT  ); // custom player limit for FFA
 
     for (var i = 0; i < alive_servers.length; i++) {
         if (alive_servers[i].current_players < alive_servers[i].max_players) {
             var chance = 1 - alive_servers[i].current_players / alive_servers[i].max_players;
-            if (Math.random() < chance || alive_servers[i].current_players < LOW_PLAYER_LIMIT) {
+            if (Math.random() < chance || alive_servers[i].current_players < lowPlayerLimit) {
                 response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort + "\n" + alive_servers[i].gameType);
                 response.end();
                 return;
