@@ -18,7 +18,7 @@ var request = require("request");
 var fs = require("fs");
 var path = require('path');
 var Server = require('./models/server.js');
-var AppInfo = require('./models/appinfo.js');
+var clientsVersions = require('./clientVersions');
 
 // CONSTANTS
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
@@ -47,7 +47,7 @@ function typedServer(name, host, gamePort, statsPort, gameType, apiId) {
 }
 
 var serverList = []; //servers list
-serverList.push(new Server(" Master VPS", "178.62.49.237", 443, 88)); //DigitalOcean Master VPS, space at start for first place after sorting
+// serverList.push(new Server(" Master VPS", "178.62.49.237", 443, 88)); //DigitalOcean Master VPS, space at start for first place after sorting
 //serverList.push(new Server("blob-f0ris.c9users.io","8080","8082"));
 
 
@@ -56,13 +56,7 @@ var GPtotalsFakeServer = new Server("GP Totals", "", "", ""); //fake server for 
 
 var GPserverList = []; //dynamic server list
 
-//clients versions
-var clientsVersions = {
-    amazon: new AppInfo(108, "a_fr5.0.1", ""),
-    gp: new AppInfo(111, "gp_fr5.1.2", ""),
-    testVersion: new AppInfo(89, "", ""),
-    ios: new AppInfo("1.0.6", "", "")
-};
+
 
 //getting servers' info with some interval
 setInterval(function () {
@@ -221,7 +215,7 @@ http.createServer(function (request, response) {
 
     var requestLowerCase = request.url.toLowerCase()
     if (requestLowerCase.match('cl_ver')) {
-        showClientsVersions(response);
+        response.end(JSON.stringify({versions: clientsVersions}));
         return;
     }
 
@@ -267,10 +261,11 @@ http.createServer(function (request, response) {
     });
     
     var lowPlayerLimit = (gameType == GameType.FFA ? 65 : LOW_PLAYER_LIMIT  ); // custom player limit for FFA
-
+    // console.log(lowPlayerLimit);
     for (var i = 0; i < alive_servers.length; i++) {
         if (alive_servers[i].current_players < alive_servers[i].max_players) {
             var chance = 1 - alive_servers[i].current_players / alive_servers[i].max_players;
+            console.log({chance, lowPlayerLimit})
             if (Math.random() < chance || alive_servers[i].current_players < lowPlayerLimit) {
                 response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort + "\n" + alive_servers[i].gameType);
                 response.end();
@@ -348,18 +343,13 @@ function showStats(response) {
     } else {
         finalList = {Amazon: serverList};
     }
-    response.write(JSON.stringify(finalList, replacer));
+    response.write(JSON.stringify(finalList, require("./fieldFilter")));
     response.end();
 
     //deleting temporary objects
     serverList.splice(serverList.length - 1, 1);
     GPserverList.splice(GPserverList.length - 1, 1);//deleting temporary objects
 };
-
-function showClientsVersions(response) {
-    response.write(JSON.stringify({versions: clientsVersions}));
-    response.end();
-}
 
 function addServ(request) {
     var body = [];
@@ -404,21 +394,6 @@ function addServ(request) {
             console.log(e);
         }
     });
-}
-
-var filteredFields = Object.freeze({
-    statistic: true,
-    statisticUpdate: true,
-    gameType: true,
-    deleteCounter: true,
-})
-
-//excluding statistic fields from JSON for 81 port
-function replacer(key, value) {
-    if (key in filteredFields) {
-        return undefined;
-    }
-    return value;
 }
 
 function serverSortFunction(a, b) {
