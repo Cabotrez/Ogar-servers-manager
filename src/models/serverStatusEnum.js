@@ -1,0 +1,1 @@
+module.exports = Object.freeze({UP: 1, DOWN: 0})
