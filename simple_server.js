@@ -24,9 +24,7 @@ var clientsVersions = require('./clientVersions');
 var ServStatusEnum = Object.freeze({UP: 1, DOWN: 0});
 var GameType = require("./models/gameType")
 var total_players = 0;
-var gp_total_players = 0;
 var max_total_players = 0;
-var gp_max_total_players = 0;
 var gameModeTotals = {}; //stores players count for each game mode
 var gameModesServers = {}; //count of servers for each game mode
 
@@ -54,9 +52,6 @@ var serverList = []; //servers list
 var totalsFakeServer = new Server("Totals", "", "", ""); //fake server for totals stats
 var GPtotalsFakeServer = new Server("GP Totals", "", "", ""); //fake server for totals stats
 
-var GPserverList = []; //dynamic server list
-
-
 
 //getting servers' info with some interval
 setInterval(function () {
@@ -73,50 +68,12 @@ setInterval(function () {
     });
 
     //counting totals
-    total_players = 0;
-    for (key in gameModeTotals) {
-        gameModeTotals[key] = 0;
-    }
-    for (key in gameModesServers) {
-        gameModesServers[key] = 0;
-    }
-    serverList.forEach(function (item, i, arr) {
-        if (item.status == ServStatusEnum.UP) {
-            total_players += item.current_players;
-            gameModeTotals[item.gameType] += item.current_players;
-            gameModesServers[item.gameType] += 1;
-        }
-    });
+    countTotals();
 
     if (total_players > max_total_players)
         max_total_players = total_players;
 
     serverList.sort(serverSortFunction);
-
-    /*************  Google Players**********/
-
-    GPserverList.forEach(function (item, i, arr) {
-        fetchServerInfo(item);
-        if (item.status == ServStatusEnum.DOWN) {
-            item.deleteCounter++;
-            // console.log("deleteCounter++");
-        }
-        if (item.deleteCounter >= DELETE_COUNTER_LIMIT) {
-            GPserverList.splice(i, 1);
-            // console.log("deleted");
-        }
-    });
-
-    //counting totals
-    gp_total_players = 0;
-    GPserverList.forEach(function (item, i, arr) {
-        if (item.status == ServStatusEnum.UP) {
-            gp_total_players += item.current_players;
-        }
-    });
-
-    if (gp_total_players > gp_max_total_players)
-        gp_max_total_players = gp_total_players;
 
 }, FETCH_SERVER_INFO_INTERVAL);
 
@@ -127,7 +84,6 @@ setInterval(function () {
 
     // statisticTotal.push([timeStr, total_players]);
     totalsFakeServer.statistic.push([timeStr, total_players]);
-    GPtotalsFakeServer.statistic.push([timeStr, gp_total_players]);
 
     function saveStats(item, i, arr) {
         if (item.status == ServStatusEnum.UP) {
@@ -143,7 +99,6 @@ setInterval(function () {
     }
 
     serverList.forEach(saveStats);
-    GPserverList.forEach(saveStats);
 
     if (totalsFakeServer.statistic.length > MAX_STATS_DATA_LENGTH) {
         totalsFakeServer.statistic.splice(1, 1)
@@ -331,24 +286,16 @@ function showStats(response) {
                    'max_total_players': max_total_players, 
                    'gameModeTotals': gameModeTotals,
                    'gameModesPercentage': gameModePerc,
-                   'gameModesServers': gameModesServers},
-                  {'gp_total_players': gp_total_players, 
-                   'gp_max_total_players': gp_max_total_players}];
+                   'gameModesServers': gameModesServers}];
 
     serverList.push(totals[0]);
 
-    if (GPserverList.length > 0) {
-        GPserverList.push(totals[1]);
-        finalList = {Amazon: serverList, GooglePlay: GPserverList, Totals: totals};
-    } else {
-        finalList = {Amazon: serverList};
-    }
+    finalList = {Amazon: serverList};
     response.write(JSON.stringify(finalList, require("./fieldFilter")));
     response.end();
 
     //deleting temporary objects
     serverList.splice(serverList.length - 1, 1);
-    GPserverList.splice(GPserverList.length - 1, 1);//deleting temporary objects
 };
 
 function addServ(request) {
@@ -403,4 +350,22 @@ function serverSortFunction(a, b) {
     if (nameA > nameB)
         return 1;
     return 0; //default return value (no sorting)
+}
+
+
+function countTotals(){
+    total_players = 0;
+    for (key in gameModeTotals) {
+        gameModeTotals[key] = 0;
+    }
+    for (key in gameModesServers) {
+        gameModesServers[key] = 0;
+    }
+    serverList.forEach(function (item, i, arr) {
+        if (item.status == ServStatusEnum.UP) {
+            total_players += item.current_players;
+            gameModeTotals[item.gameType] += item.current_players;
+            gameModesServers[item.gameType] += 1;
+        }
+    });
 }
