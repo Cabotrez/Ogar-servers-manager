@@ -1,7 +1,7 @@
 var http = require("http")
 var fs = require("fs")
 var path = require("path")
-var serverList = require("./serversList").serverList
+var srvList = require("./serversList")
 var totals = require("./totalStats")
 
 //show statistic in chart
@@ -9,8 +9,7 @@ http.createServer(function (request, response) {
     response.writeHead(200, {'Content-Type': 'text/html'});
     if (request.url.match('stats')) {
         response.writeHead(200, {'Content-Type': 'application/json'});
-        response.write(JSON.stringify(serverList, (key,value) => key == "statistic" ? undefined : value ));
-        response.end();
+        response.end(JSON.stringify(srvList.serverList.concat(totals.totalsFakeServer), (key,value) => key == "statistic" ? undefined : value ));
         return;
     }
     
@@ -30,11 +29,7 @@ http.createServer(function (request, response) {
     response.writeHead(200, {'Content-Type': 'text/html'});
     if (request.url.match('stats')) {
         response.writeHead(200, {'Content-Type': 'application/json'});
-        serverList.push(totals.totalsFakeServer);
-        response.write(JSON.stringify(serverList, (key,value) => 
-        key == "statisticUpdate" ? undefined : value ));
-        serverList.splice(serverList.length - 1, 1);
-        response.end();
+        response.end(JSON.stringify(srvList.serverList.concat(totals.totalsFakeServer), (key,value) => key == "statisticUpdate" ? undefined : value ));
         return;
     }
     
@@ -47,7 +42,6 @@ http.createServer(function (request, response) {
         }
         
         // var renderedHtml = ejs.render(content, {serverList: JSON.stringify(serverList, replacerForGraph)});  //get rendered HTML code
-        
         // response.end(renderedHtml);
         response.end(content);
     });
@@ -56,8 +50,6 @@ http.createServer(function (request, response) {
 
 http.createServer(function (request, response) {
     response.writeHead(200, {"Content-Type": "application/json"});
-    serverList.push(totals.buildTotals());
-    response.end(JSON.stringify([{Amazon: serverList}], require("./fieldFilter")));
-    //deleting temporary objects
-    serverList.splice(serverList.length - 1, 1);
+    var totalsData = totals.buildTotals()
+    response.end(JSON.stringify([{Amazon: srvList.serverList.concat(totalsData)}], require("./fieldFilter")));
 }).listen(81);

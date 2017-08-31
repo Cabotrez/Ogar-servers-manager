@@ -6,6 +6,7 @@ var Server = require("./models/server")
 var totals = {
     players: 0,
     maxPlayers: 0,
+    updateTime: 0,
     gameModeTotals: {}, //stores players count for each game mode
     gameModesServers: {},//count of servers for each game mode  
     totalsFakeServer: new Server("Totals", "", "", ""), //fake server for totals stats

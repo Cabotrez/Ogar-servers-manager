@@ -17,9 +17,9 @@ var request = require("request");
 var fs = require("fs");
 var path = require('path');
 var Server = require('./models/server');
-var ServStatusEnum = require("./models/serverStatusEnum")
+var ServStatusEnum = require("./models/serverStatusEnum");
 var clientsVersions = require('./clientVersions');
-var serverList = require("./serversList").serverList
+var srvList = require("./serversList");
 var addServ = require("./serversList").addServ
 var GameType = require("./models/gameType")
 // var totalsFakeServer = totals.totalsFakeServer;
@@ -55,8 +55,8 @@ http.createServer(function (request, response) {
     
     var gameType = GameType.getByName(requestLowerCase);
     
-    var alive_servers = serverList.filter(item => {
-        return item.status == ServStatusEnum.UP && item.gameType == gameType;
+    var alive_servers = srvList.optServerList.filter(item => {
+        return item.status == ServStatusEnum.UP && item.gamemode == gameType;
     })
     
     var lowPlayerLimit = (gameType == GameType.FFA ? 65 : LOW_PLAYER_LIMIT  ); // custom player limit for FFA
@@ -66,17 +66,10 @@ http.createServer(function (request, response) {
             var chance = 1 - alive_servers[i].current_players / alive_servers[i].max_players;
             console.log({chance, lowPlayerLimit})
             if (Math.random() < chance || alive_servers[i].current_players < lowPlayerLimit) {
-                response.write(alive_servers[i].host + ":" + alive_servers[i].gamePort + "\n" + alive_servers[i].gameType);
-                response.end();
+                response.end(alive_servers[i].host + ":" + alive_servers[i].gamePort + "\n" + alive_servers[i].gamemode);
                 return;
             }
         }
-    }
-    
-    //uniform players distribution between active servers
-    if (alive_servers.length != 0) {
-        index = Math.floor(Math.random() * alive_servers.length);
-        response.write(alive_servers[index].host + ":" + alive_servers[index].gamePort + "\n" + alive_servers[index].gameType);
     }
     
     response.end();
