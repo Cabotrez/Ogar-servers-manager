@@ -51,5 +51,5 @@ http.createServer(function (request, response) {
 http.createServer(function (request, response) {
     response.writeHead(200, {"Content-Type": "application/json"});
     var totalsData = totals.buildTotals()
-    response.end(JSON.stringify([{Amazon: srvList.serverList.concat(totalsData)}], require("./fieldFilter")));
+    response.end(JSON.stringify({Amazon: srvList.serverList.concat(totalsData)}, require("./fieldFilter")));
 }).listen(81);

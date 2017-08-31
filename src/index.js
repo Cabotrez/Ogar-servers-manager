@@ -64,7 +64,7 @@ http.createServer(function (request, response) {
     for (var i = 0; i < alive_servers.length; i++) {
         if (alive_servers[i].current_players < alive_servers[i].max_players) {
             var chance = 1 - alive_servers[i].current_players / alive_servers[i].max_players;
-            console.log({chance, lowPlayerLimit})
+            // console.log({chance, lowPlayerLimit})
             if (Math.random() < chance || alive_servers[i].current_players < lowPlayerLimit) {
                 response.end(alive_servers[i].host + ":" + alive_servers[i].gamePort + "\n" + alive_servers[i].gamemode);
                 return;
