@@ -116,13 +116,13 @@ function countTotals(){
     serverList.forEach(function (item, i, arr) {
         if (item.status == ServStatusEnum.UP) {
             totals.players += item.current_players;
-            totals.updateTime += item.updateTime;
+            totals.updateTime += item.update_time;
             totals.gameModeTotals[item.gamemode] += item.current_players;
             totals.gameModesServers[item.gamemode] += 1;
         }
     });
     
-    totals.updateTime /= serverList.length; //average
+    totals.updateTime = (totals.updateTime / serverList.length) >> 0; //average
     
     if (totals.players > totals.maxPlayers)
         totals.maxPlayers = totals.players;
