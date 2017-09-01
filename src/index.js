@@ -29,7 +29,7 @@ require("./statsServers") //start stats server on 81,82,83 ports
 
 // CONSTANTS
 // if server have players count lower than this value, forcing move players to this server 
-var LOW_PLAYER_LIMIT = 30;
+var LOW_PLAYER_LIMIT = 40;
 var NORMAL_PLAYER_LIMIT = 120;
 
 
@@ -60,6 +60,10 @@ http.createServer(function (request, response) {
     })
     
     var lowPlayerLimit = (gameType == GameType.FFA ? 65 : LOW_PLAYER_LIMIT  ); // custom player limit for FFA
+    if (gameType == GameType.SELF_FEED){
+        lowPlayerLimit = 30;
+    }
+
     // console.log(lowPlayerLimit);
     for (var i = 0; i < alive_servers.length; i++) {
         if (alive_servers[i].current_players < alive_servers[i].max_players) {
