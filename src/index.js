@@ -53,18 +53,16 @@ http.createServer(function (request, response) {
         return;
     }
     
-    var gameType = GameType.getByName(requestLowerCase);
+    var gameTypeName = GameType.getByName(requestLowerCase);
     
     var alive_servers = srvList.optServerList.filter(item => {
-        return item.status == ServStatusEnum.UP && item.gamemode == gameType;
+        return item.status == ServStatusEnum.UP && item.gamemode == gameTypeName;
     })
     
-    var lowPlayerLimit = (gameType == GameType.FFA ? 65 : LOW_PLAYER_LIMIT  ); // custom player limit for FFA
-    if (gameType == GameType.SELF_FEED){
-        lowPlayerLimit = 30;
-    }
+    //adjust low player limit for current game mode
+    var lowPlayerLimit = GameType.getLowPlayerLimit(gameTypeName, LOW_PLAYER_LIMIT);
+    console.dir({gameTypeName, lowPlayerLimit});
 
-    // console.log(lowPlayerLimit);
     for (var i = 0; i < alive_servers.length; i++) {
         if (alive_servers[i].current_players < alive_servers[i].max_players) {
             var chance = 1 - alive_servers[i].current_players / alive_servers[i].max_players;
@@ -75,6 +73,6 @@ http.createServer(function (request, response) {
             }
         }
     }
-    
+    // response.end(JSON.stringify({as:lowPlayerLimit}));
     response.end();
 }).listen(80);

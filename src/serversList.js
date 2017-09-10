@@ -200,6 +200,7 @@ function addServ(request) {
                     serverList.push(new typedServer(serv.name, servIp, serv.gamePort, serv.statsPort, serv.mode, serv.mode_api_id))
                     console.log("serv Added")
                 }
+                //TODO if found - just update data
             } catch (e) {
                 console.log(e);
             }

@@ -50,6 +50,11 @@ http.createServer(function (request, response) {
 
 http.createServer(function (request, response) {
     response.writeHead(200, {"Content-Type": "application/json"});
+    var all = request.url.match('/all');
     var totalsData = totals.buildTotals()
-    response.end(JSON.stringify({Amazon: srvList.serverList.concat(totalsData)}, require("./fieldFilter")));
+    var data = srvList.serverList.concat(totalsData);
+    if (!all) {
+        data = data.filter(item => item.gamemode_api_id != 7); //filter TS2v2
+    }
+    response.end(JSON.stringify({Amazon: data}, require("./fieldFilter")));
 }).listen(81);
