@@ -36,6 +36,9 @@ module.exports = Object.freeze({
             case this.SELF_FEED:
                 res = 30;
                 break;
+            case this.CRAZY:
+                res = 35;
+                break;
             case this.TS2v2:
                 res = 4;
                 break;
