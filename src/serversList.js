@@ -54,14 +54,14 @@ function optimizeList(list) {
             groups[item.host].push(item);
         }
     })
-
+    
     return merge(groups);
 }
 
 // merge servers over one like cards
 function merge(data){
     const res = Array();
-     for (var index = 0; ; index++) {
+    for (var index = 0; ; index++) {
         var exit = true;
         for (var key in data){
             if (index < data[key].length){
@@ -72,7 +72,7 @@ function merge(data){
         if (exit) {
             return res;
         }
-     }
+    }
 }
 
 function saveStatistic() {
@@ -80,7 +80,7 @@ function saveStatistic() {
     var timeStr = time.getDate() + " " + time.getHours() + ':' + time.getMinutes();// + ':' + time.getSeconds();
     
     // statisticTotal.push([timeStr, totals.players]);
-
+    
     totalsFakeServer.statistic.push([timeStr, totals.players]);
     totalsFakeServer.statisticUpdate.push([timeStr, totals.updateTime]);
     
@@ -116,7 +116,7 @@ function countTotals(){
     serverList.forEach(function (item, i, arr) {
         if (item.status == ServStatusEnum.UP) {
             totals.players += item.current_players;
-            totals.updateTime += item.update_time;
+            totals.updateTime += parseFloat(item.update_time);
             totals.gameModeTotals[item.gamemode] += item.current_players;
             totals.gameModesServers[item.gamemode] += 1;
         }
@@ -124,8 +124,9 @@ function countTotals(){
     
     totals.updateTime = (totals.updateTime / serverList.length) >> 0; //average
     
-    if (totals.players > totals.maxPlayers)
+    if (totals.players > totals.maxPlayers) {
         totals.maxPlayers = totals.players;
+    }
 }
 
 // Check players count on server
@@ -206,37 +207,37 @@ function addServ(request) {
             }
         });
     }
-
+    
     function typedServer(name, host, gamePort, statsPort, gameType, apiId) {
         var serv = new Server(name, host, gamePort, statsPort);
         serv.gamemode = gameType;
         serv.gamemode_api_id = apiId;
         return serv;
     }
-
-function serverSortFunction(a, b) {
-    var nameA = a.name.toLowerCase(), nameB = b.name.toLowerCase();
-    if (nameA < nameB) //sort string ascending
+    
+    function serverSortFunction(a, b) {
+        var nameA = a.name.toLowerCase(), nameB = b.name.toLowerCase();
+        if (nameA < nameB) //sort string ascending
         return -1;
-    if (nameA > nameB)
+        if (nameA > nameB)
         return 1;
-    return 0; //default return value (no sorting)
-}
-
-function sortFn(a,b){
-    let res = a.host.localeCompare(b.host);
-    if (!res){
-        res = a.gamemode.localeCompare(b.gamemode);
+        return 0; //default return value (no sorting)
     }
-    return res;
-}
-
-
-//this needed to update references
-var exportObj = {
-    serverList,
-    optServerList: optServerList,
-    addServ 
-}
-
-module.exports = exportObj
+    
+    function sortFn(a,b){
+        let res = a.host.localeCompare(b.host);
+        if (!res){
+            res = a.gamemode.localeCompare(b.gamemode);
+        }
+        return res;
+    }
+    
+    
+    //this needed to update references
+    var exportObj = {
+        serverList,
+        optServerList: optServerList,
+        addServ 
+    }
+    
+    module.exports = exportObj

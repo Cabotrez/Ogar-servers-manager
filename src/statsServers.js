@@ -53,8 +53,8 @@ http.createServer(function (request, response) {
     var all = request.url.match('/all');
     var totalsData = totals.buildTotals()
     var data = srvList.serverList.concat(totalsData);
-    if (!all) {
-        data = data.filter(item => item.gamemode_api_id != 7); //filter TS2v2
-    }
+    // if (!all) {
+    //     data = data.filter(item => item.gamemode_api_id != 7); //filter TS2v2
+    // }
     response.end(JSON.stringify({Amazon: data}, require("./fieldFilter")));
 }).listen(81);
