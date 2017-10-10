@@ -21,7 +21,7 @@ var ServStatusEnum = require("./models/serverStatusEnum");
 var clientsVersions = require('./clientVersions');
 var srvList = require("./serversList");
 var addServ = require("./serversList").addServ
-var GameType = require("./models/gameType")
+var GameModeEnum = require('./models/GameModeEnum')
 // var totalsFakeServer = totals.totalsFakeServer;
 
 require("./statsServers") //start stats server on 81,82,83 ports
@@ -29,7 +29,7 @@ require("./statsServers") //start stats server on 81,82,83 ports
 
 // CONSTANTS
 // if server have players count lower than this value, forcing move players to this server 
-var LOW_PLAYER_LIMIT = 40;
+// var LOW_PLAYER_LIMIT = 40;
 var NORMAL_PLAYER_LIMIT = 120;
 
 
@@ -54,18 +54,21 @@ http.createServer(function (request, response) {
     }
     
     
-    var gameTypeName = GameType.getByName(requestLowerCase);
+    var gameMode = GameModeEnum.getByName(requestLowerCase.replace("/",""));
+    if (gameMode == GameModeEnum.UNKNOWN) {
+        response.end("Unknown game mode");
+        return;
+    }
     
     var alive_servers = srvList.optServerList.filter(item => {
-        return item.status == ServStatusEnum.UP && item.gamemode == gameTypeName;
+        return item.status == ServStatusEnum.UP && item.gamemode == gameMode.name;
     })
     
     //adjust low player limit for current game mode
-    var lowPlayerLimit = GameType.getLowPlayerLimit(gameTypeName, LOW_PLAYER_LIMIT);
+    var lowPlayerLimit = gameMode.limit;
     
     //another one trick to distribute players over servers
-    var gameId = GameType.getId(gameTypeName);
-    if (gameId % 2 == 0){
+    if (gameMode.id % 2 == 0){
         alive_servers.reverse();
     }
     // console.dir({gameTypeName, lowPlayerLimit});
