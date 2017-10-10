@@ -53,6 +53,7 @@ http.createServer(function (request, response) {
         return;
     }
     
+    
     var gameTypeName = GameType.getByName(requestLowerCase);
     
     var alive_servers = srvList.optServerList.filter(item => {
@@ -61,8 +62,14 @@ http.createServer(function (request, response) {
     
     //adjust low player limit for current game mode
     var lowPlayerLimit = GameType.getLowPlayerLimit(gameTypeName, LOW_PLAYER_LIMIT);
-    console.dir({gameTypeName, lowPlayerLimit});
-
+    
+    //another one trick to distribute players over servers
+    var gameId = GameType.getId(gameTypeName);
+    if (gameId % 2 == 0){
+        alive_servers.reverse();
+    }
+    // console.dir({gameTypeName, lowPlayerLimit});
+    
     for (var i = 0; i < alive_servers.length; i++) {
         if (alive_servers[i].current_players < alive_servers[i].max_players) {
             var chance = 1 - alive_servers[i].current_players / alive_servers[i].max_players;
@@ -73,6 +80,12 @@ http.createServer(function (request, response) {
             }
         }
     }
-    // response.end(JSON.stringify({as:lowPlayerLimit}));
+    
+    //random - in case if previous code didn't return anything
+    if (alive_servers.length > 0){
+        var i = Math.floor(alive_servers.length * Math.random());
+        response.end(alive_servers[i].host + ":" + alive_servers[i].gamePort + "\n" + alive_servers[i].gamemode);
+        return;
+    }
     response.end();
 }).listen(80);

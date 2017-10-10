@@ -1,3 +1,4 @@
+//TODO rewrite this in normal ENUM style
 module.exports = Object.freeze({
     FFA: "FFA",
     TEAMS: "Teams",
@@ -44,5 +45,23 @@ module.exports = Object.freeze({
                 break;
         }
         return res;
+    },
+    getId: function (name) {
+        name = name.toLowerCase();
+        var result = 1;
+        if (name.match('teams')) {
+            result = 2;
+        } else if (name.match('experimental')) {
+            result = 3;   
+        } else if (name.match('instantmerge')) {
+            result = 4;
+        } else if (name.match('crazy')) {
+            result = 5;
+        } else if (name.match('selffeed')) {
+            result = 6;
+        } else if (name.match('ts2v2')) {
+            result = 7;
+        }
+        return result;
     }
 });
