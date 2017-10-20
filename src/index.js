@@ -20,17 +20,11 @@ var Server = require('./models/server');
 var ServStatusEnum = require("./models/serverStatusEnum");
 var clientsVersions = require('./clientVersions');
 var srvList = require("./serversList");
-var addServ = require("./serversList").addServ
-var GameModeEnum = require('./models/GameModeEnum')
+var addServ = require("./serversList").addServ;
+var GameModeEnum = require('./models/gameModeEnum');
 // var totalsFakeServer = totals.totalsFakeServer;
 
-require("./statsServers") //start stats server on 81,82,83 ports
-
-
-// CONSTANTS
-// if server have players count lower than this value, forcing move players to this server 
-// var LOW_PLAYER_LIMIT = 40;
-var NORMAL_PLAYER_LIMIT = 120;
+require("./statsServers") //start stats servers on 81,82,83 ports
 
 
 //choosing and giving back server's ip
@@ -52,8 +46,9 @@ http.createServer(function (request, response) {
         showStats(response);
         return;
     }
-    
-    
+
+    requestLowerCase = requestLowerCase.replace("/gp","");
+
     var gameMode = GameModeEnum.getByName(requestLowerCase.replace("/",""));
     if (gameMode == GameModeEnum.UNKNOWN) {
         response.end("Unknown game mode");
@@ -61,7 +56,7 @@ http.createServer(function (request, response) {
     }
     
     var alive_servers = srvList.optServerList.filter(item => {
-        return item.status == ServStatusEnum.UP && item.gamemode == gameMode.name;
+        return item.status == ServStatusEnum.UP && item.gamemode_api_id == gameMode.id;
     })
     
     //adjust low player limit for current game mode

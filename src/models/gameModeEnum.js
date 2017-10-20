@@ -1,10 +1,12 @@
+// if server have players count lower than this value, forcing move players to this server 
 const LOW_PLAYER_LIMIT = 40;
 
-class GameMode{
-    constructor(id, name, limit){
+class GameMode {
+    constructor(id, name, limit) {
         this.id = id;
         this.name = name;
         this.limit = limit || LOW_PLAYER_LIMIT;
+        Object.freeze(this);
     }
 }
 
@@ -14,34 +16,47 @@ const GameModeEnum = Object.freeze({
     FFA: new GameMode(1, "FFA", 65),
     TEAMS: new GameMode(2, "TEAMS"),
     EXPERIMENTAL: new GameMode(3, "EXPERIMENTAL"),
-    INSTANT_MERGE: new GameMode(3, "INSTANT_MERGE"),
-    CRAZY: new GameMode(3, "CRAZY"),
-    SELF_FEED: new GameMode(3, "SELF_FEED", 30),
-    TS2v2: new GameMode(3, "TS2v2", 500),
+    INSTANT_MERGE: new GameMode(4, "INSTANTMERGE"),
+    CRAZY: new GameMode(5, "CRAZY"),
+    SELF_FEED: new GameMode(6, "SELFFEED", 30),
+    TS2v2: new GameMode(7, "TS2v2", 500),
 
-    getByName: function (name){
-        var result = this.UNKNOWN;
-        name = name.toLowerCase();
-        var values = this.getValues();
-        for (var i = 0; i < values.length; i++) {
-            if (values[i].name.toLowerCase() == name) {
-                return values[i];
-            }
+    adjustExp: function (gameMode, exp) {
+        switch (gameMode) {
+            case this.SELF_FEED:
+                exp = Math.min(Math.pow(exp, 10 / 41), 3500) >> 0;
+                break;
+            case this.CRAZY:
+                exp = Math.pow(exp, 10 / 20) >> 0;
+                break;
+            case this.TS2v2:
+            case this.UNKNOWN:
+                exp = 0;
+                break;
         }
+
+        if (gameMode != this.CRAZY && gameMode != this.INSTANT_MERGE) {
+            exp *= 2 >> 0; //more exp for other game modes
+        }
+        return exp;
+    },
+
+    getByName: function (name) {
+        if (name === "") {
+            return this.FFA; //return FFA if no name
+        }
+        name = name.toLowerCase();
+        var result = this.getValues().find(item => item.name.toLowerCase() == name) || this.UNKNOWN;
         return result;
     },
     getById: function (id) {
-        var values = this.getValues();
-        for (var i = 0; i < values.length; i++) {
-            if (values[i].id == id) {
-                return values[i];
-            }
-        }
+        var result = this.getValues().find(item => item.id == id) || this.UNKNOWN;
+        return result;
     },
     getValues: function () {
         var res = [];
-        for (var key in this){
-            if (typeof this[key] !== "function"){
+        for (var key in this) {
+            if (typeof this[key] !== "function") {
                 res.push(this[key]);
             }
         }
