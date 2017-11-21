@@ -76,13 +76,17 @@ describe('GameModeEnum', function () {
                 INSTANTMERGE: 5000,
                 CRAZY: 70,
                 SELFFEED: 14,
-                TS2v2: 0
+                TS2v2: 0,
+                ULTRA: 0,
             }
             var wrongVals = [];
-            var res = Object.keys(expectedVals).every(key => {
-                var adjustedExp = GameModeEnum.adjustExp(GameModeEnum.getByName(key), 5000);
-                if (adjustedExp != expectedVals[key]) {
-                    wrongVals.push({ name: key, expected: expectedVals[key], actual: adjustedExp });
+            var fakeServer = { 
+                current_players: 15 
+            };
+            var res = GameModeEnum.getValues().every(item => {
+                var adjustedExp = GameModeEnum.adjustExp(item, 5000, fakeServer);
+                if (adjustedExp != expectedVals[item.name]) {
+                    wrongVals.push({ name: item.name, expected: expectedVals[item.name], actual: adjustedExp });
                     return false;
                 } else {
                     return true;
@@ -92,6 +96,13 @@ describe('GameModeEnum', function () {
                 console.log(wrongVals)
             }
             assert.equal(res, true);
+        });
+        it("should set exp to 0 if server is almost empty (current_players < 10)", function () {
+            var fakeServer = { 
+                current_players: 5 
+            };
+            var res = GameModeEnum.adjustExp(GameModeEnum.TEAMS, 5000, fakeServer)
+            assert.equal(res, 0);
         });
     });
 

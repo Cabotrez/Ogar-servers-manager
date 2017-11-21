@@ -1,5 +1,6 @@
 // if server have players count lower than this value, forcing move players to this server 
 const LOW_PLAYER_LIMIT = 40;
+const NO_EXP_PLAYER_LIMIT = 10;
 
 class GameMode {
     constructor(id, name, limit) {
@@ -20,8 +21,12 @@ const GameModeEnum = Object.freeze({
     CRAZY: new GameMode(5, "CRAZY"),
     SELF_FEED: new GameMode(6, "SELFFEED", 30),
     TS2v2: new GameMode(7, "TS2v2", 500),
+    ULTRA: new GameMode(8, "ULTRA", 25),
 
-    adjustExp: function (gameMode, exp) {
+    adjustExp: function (gameMode, exp, server) {
+        if (!gameMode || !exp || !server){
+            throw new Error("No needed params");
+        }
         switch (gameMode) {
             case this.SELF_FEED:
                 exp = Math.min(Math.pow(exp, 10 / 41), 3500) >> 0;
@@ -30,9 +35,17 @@ const GameModeEnum = Object.freeze({
                 exp = Math.pow(exp, 10 / 20) >> 0;
                 break;
             case this.TS2v2:
+            case this.ULTRA:
             case this.UNKNOWN:
                 exp = 0;
                 break;
+        }
+
+        //do not add exp for almost empty servers
+        if (gameMode != this.TS2v2 && gameMode != this.SELF_FEED) {
+            if (server.current_players < NO_EXP_PLAYER_LIMIT) {
+                exp = 0;
+            }
         }
 
         if (gameMode != this.CRAZY && gameMode != this.INSTANT_MERGE) {
