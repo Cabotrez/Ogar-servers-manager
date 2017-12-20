@@ -3,10 +3,10 @@ var AppInfo = require('./models/appinfo.js');
 
 //clients versions
 var clientsVersions = {
-    amazon: new AppInfo(125, "5.6.1", ""),
-    gp: new AppInfo(130, "5.6.1", ""),
+    amazon: new AppInfo(137, "5.9.0", ""),
+    gp: new AppInfo(137, "5.9.0", ""),
     testVersion: new AppInfo(89, "", ""),
-    ios: new AppInfo("1.1.2", "", ""),
+    ios: new AppInfo("1.1.9", "", ""),
 };
 
 module.exports = clientsVersions;

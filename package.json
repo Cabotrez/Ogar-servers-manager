@@ -16,5 +16,10 @@
   "bugs": {
     "url": "https://github.com/F0RIS/Ogar-servers-manager/issues"
   },
-  "homepage": "https://github.com/F0RIS/Ogar-servers-manager#readme"
+  "homepage": "https://github.com/F0RIS/Ogar-servers-manager#readme",
+  "dependencies": {
+    "mocha": "^4.0.1",
+    "path": "^0.12.7",
+    "request": "^2.83.0"
+  }
 }
