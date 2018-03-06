@@ -17,7 +17,7 @@ var totalsFakeServer = totals.totalsFakeServer; //fake server for totals stats
 
 
 setInterval(getServersInfo, FETCH_SERVER_INFO_INTERVAL);
-setInterval(saveStatistic, SAVE_STATS_INTERVAL); 
+setInterval(saveStatistic, SAVE_STATS_INTERVAL);
 
 //getting servers' info with some interval
 function getServersInfo() {
@@ -32,10 +32,10 @@ function getServersInfo() {
             // console.log("deleted");
         }
     });
-    
+
     countTotals();
     serverList.sort(sortFn);
-    
+
     optServerList = optimizeList(serverList);
     exportObj.optServerList = optServerList; //update export reference
 }
@@ -46,7 +46,7 @@ function optimizeList(list) {
     if (list.length == 0) {
         return list;
     }
-    
+
     list.forEach((item) => {
         if (!groups[item.host]) {
             groups[item.host] = [item];
@@ -54,17 +54,17 @@ function optimizeList(list) {
             groups[item.host].push(item);
         }
     })
-    
+
     return merge(groups);
 }
 
 // merge servers over one like cards
-function merge(data){
+function merge(data) {
     const res = Array();
     for (var index = 0; ; index++) {
         var exit = true;
-        for (var key in data){
-            if (index < data[key].length){
+        for (var key in data) {
+            if (index < data[key].length) {
                 res.push(data[key][index]);
                 exit = false;
             }
@@ -78,12 +78,12 @@ function merge(data){
 function saveStatistic() {
     var time = new Date();
     var timeStr = time.getDate() + " " + time.getHours() + ':' + time.getMinutes();// + ':' + time.getSeconds();
-    
+
     // statisticTotal.push([timeStr, totals.players]);
-    
+
     totalsFakeServer.statistic.push([timeStr, totals.players]);
     totalsFakeServer.statisticUpdate.push([timeStr, totals.updateTime]);
-    
+
     function saveStats(item, i, arr) {
         if (item.status == ServStatusEnum.UP) {
             item.statistic.push([timeStr, Math.floor(item.current_players)]);
@@ -96,15 +96,15 @@ function saveStatistic() {
             }
         }
     }
-    
+
     serverList.forEach(saveStats);
-    
+
     if (totalsFakeServer.statistic.length > MAX_STATS_DATA_LENGTH) {
         totalsFakeServer.statistic.splice(1, 1)
     }
 }
 
-function countTotals(){
+function countTotals() {
     totals.players = 0;
     totals.updateTime = 0;
     for (key in totals.gameModeTotals) {
@@ -121,9 +121,9 @@ function countTotals(){
             totals.gameModesServers[item.gamemode] += 1;
         }
     });
-    
+
     totals.updateTime = (totals.updateTime / serverList.length) >> 0; //average
-    
+
     if (totals.players > totals.maxPlayers) {
         totals.maxPlayers = totals.players;
     }
@@ -131,7 +131,7 @@ function countTotals(){
 
 // Check players count on server
 function fetchServerInfo(server) {
-    
+
     request({
         uri: "http://" + server.host + ":" + server.statsPort,
         method: "GET",
@@ -164,7 +164,7 @@ function fetchServerInfo(server) {
 
 function addServ(request) {
     var body = [];
-    
+
     request.on('error', function (err) {
         console.error(err);
     }).on('data', function (chunk) {
@@ -176,9 +176,9 @@ function addServ(request) {
         // do whatever we need to in order to respond to this request.
         try {
             var servIp = request.headers['x-forwarded-for'] ||
-            request.connection.remoteAddress ||
-            request.socket.remoteAddress ||
-            request.connection.socket.remoteAddress;
+                request.connection.remoteAddress ||
+                request.socket.remoteAddress ||
+                request.connection.socket.remoteAddress;
             //console.log(servIp);
             if (servIp.includes("ffff")) {
                 servIp = servIp.substring(servIp.indexOf("ffff") + 5, servIp.length)
@@ -191,53 +191,54 @@ function addServ(request) {
                 if (element.host === servIp &&
                     element.gamePort === serv.gamePort &&
                     element.statsPort === serv.statsPort) {
-                        return element;
-                    }
-                    // console.log(element);
-                })
-                //console.log(found);
-                if (!found) {
-                    
-                    serverList.push(new typedServer(serv.name, servIp, serv.gamePort, serv.statsPort, serv.mode, serv.mode_api_id))
-                    console.log("serv Added")
+                    return element;
                 }
-                //TODO if found - just update data
-            } catch (e) {
-                console.log(e);
+                // console.log(element);
+            })
+            //console.log(found);
+            if (!found) {
+
+                serverList.push(new typedServer(serv.name, servIp, serv.gamePort, serv.statsPort, serv.mode, serv.mode_api_id))
+                console.log("serv Added")
             }
-        });
-    }
-    
-    function typedServer(name, host, gamePort, statsPort, gameType, apiId) {
-        var serv = new Server(name, host, gamePort, statsPort);
-        serv.gamemode = gameType;
-        serv.gamemode_api_id = apiId;
-        return serv;
-    }
-    
-    function serverSortFunction(a, b) {
-        var nameA = a.name.toLowerCase(), nameB = b.name.toLowerCase();
-        if (nameA < nameB) //sort string ascending
-        return -1;
-        if (nameA > nameB)
-        return 1;
-        return 0; //default return value (no sorting)
-    }
-    
-    function sortFn(a,b){
-        let res = a.host.localeCompare(b.host);
-        if (!res){
-            res = a.gamemode.localeCompare(b.gamemode);
+            //TODO if found - just update data
+        } catch (e) {
+            console.log(e);
         }
-        return res;
+    });
+}
+
+function typedServer(name, host, gamePort, statsPort, gameType, apiId) {
+    var serv = new Server(name, host, gamePort, statsPort);
+    serv.gamemode = gameType;
+    serv.gamemode_api_id = apiId;
+    return serv;
+}
+
+function serverSortFunction(a, b) {
+    var nameA = a.name.toLowerCase(), nameB = b.name.toLowerCase();
+    if (nameA < nameB) //sort string ascending
+        return -1;
+    if (nameA > nameB)
+        return 1;
+    return 0; //default return value (no sorting)
+}
+
+function sortFn(a, b) {
+    //we must consider port too
+    let res = (a.host + a.gamePort).localeCompare(b.host + b.gamePort);
+    if (!res) {
+        res = a.gamemode.localeCompare(b.gamemode);
     }
-    
-    
-    //this needed to update references
-    var exportObj = {
-        serverList,
-        optServerList: optServerList,
-        addServ 
-    }
-    
-    module.exports = exportObj
+    return res;
+}
+
+
+//this needed to update references
+var exportObj = {
+    serverList,
+    optServerList: optServerList,
+    addServ
+}
+
+module.exports = exportObj
