@@ -20,8 +20,10 @@ const GameModeEnum = Object.freeze({
     INSTANT_MERGE: new GameMode(4, "INSTANTMERGE"),
     CRAZY: new GameMode(5, "CRAZY"),
     SELF_FEED: new GameMode(6, "SELFFEED", 30),
-    TS2v2: new GameMode(7, "TS2v2", 500),
+    TS2v2: new GameMode(7, "TS2v2", 300),
     ULTRA: new GameMode(8, "ULTRA", 25),
+    
+    CUSTOM: new GameMode(97, "CUSTOM", 300),
 
     adjustExp: function (gameMode, exp, server) {
         if (!gameMode || !exp || !server){
@@ -37,6 +39,7 @@ const GameModeEnum = Object.freeze({
             case this.TS2v2:
             case this.ULTRA:
             case this.UNKNOWN:
+            case this.CUSTOM:
                 exp = 0;
                 break;
         }

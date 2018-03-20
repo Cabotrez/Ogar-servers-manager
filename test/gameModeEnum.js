@@ -78,6 +78,7 @@ describe('GameModeEnum', function () {
                 SELFFEED: 14,
                 TS2v2: 0,
                 ULTRA: 0,
+                CUSTOM: 0
             }
             var wrongVals = [];
             var fakeServer = { 
