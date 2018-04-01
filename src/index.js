@@ -54,10 +54,6 @@ http.createServer(function (request, response) {
         response.end("Unknown game mode");
         return;
     }
-
-    if (gameMode == GameModeEnum.CUSTOM) {
-        gameMode = GameModeEnum.TS2v2; // custom and ts2v2 works on same master server instance
-    }
     
     var alive_servers = srvList.optServerList.filter(item => {
         return item.status == ServStatusEnum.UP && item.gamemode_api_id == gameMode.id;
@@ -90,4 +86,4 @@ http.createServer(function (request, response) {
         return;
     }
     response.end();
-}).listen(888);
+}).listen(80);
